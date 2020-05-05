@@ -3,7 +3,7 @@ import torch
 from torch.utils.data import DataLoader
 from torchvision import transforms
 
-from .ImageDataset import ImageDataset
+from ImageDataset import ImageDataset
 
 # DO NOT CHANGE:
 crop_size = 224 # Required by resnet152
@@ -35,8 +35,8 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
 ])
 
-def getDataLoader(data_dir, vocab, batch_size, shuffle=True, num_workers=2):
-    dataset = ImageDataset(data_dir=data_dir, vocab=vocab, transform=transform)
+def getDataLoader(data_dir, batch_size, shuffle=True, num_workers=2):
+    dataset = ImageDataset(data_dir=data_dir, transform=transform)
     data_loader = DataLoader(dataset=dataset,
                             batch_size=batch_size,
                             shuffle=shuffle,
