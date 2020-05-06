@@ -11,9 +11,9 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
-from .dataset import *
-from .model import BaselineModel, OurModel
-from .utils import *
+from dataset import *
+from model import BaselineModel, OurModel
+from utils import *
 
 def main():
 
@@ -35,17 +35,20 @@ def main():
     # Convert device
     model = model.to(device)
 
-    # Load model
-
-
-
     # Create optimizer
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 
     start_epoch = 0
-    batch_count = len(data_loader)
+    batch_count = len(train_data_loader)
+
+    #Load if resume
+    if opt.resume:
+        checkpoint = torch.load(os.path.join(opt.out_dir, 'best.pkl'))
+        model.load_state_dict(checkpoint['model'])    
+        optimizer.load_state_dict(checkpoint['optimizer']) 
+        start_epoch = checkpoint['epoch']  
 
     # Train loop
     for epoch in range(start_epoch, opt.num_epochs):
@@ -53,7 +56,7 @@ def main():
         # Set model to train mode
         model.train()
 
-        with tqdm(enumerate(data_loader), total=batch_count) as pbar: # progress bar
+        with tqdm(enumerate(train_data_loader), total=batch_count) as pbar: # progress bar
             for i, (images) in pbar:
 
                 # Shape: torch.Size([batch_size, 3, crop_size, crop_size])
