@@ -95,11 +95,12 @@ class OurModel(nn.Module):
         self.classifer = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
 
-    def forward (self, images):
+    def forward (self, images, images_subset):
 
-        h = self.encoder(images)
-        y = self.classifer(h)
-        a = self.adv_head(h)
-        return y, a
+        h_images = self.encoder(images)
+        y = self.classifer(h_images)
+        h_images_subset = self.encoder(images_subset)
+        z = self.adv_head(h_images_subset)
+        return y, z
 
 
