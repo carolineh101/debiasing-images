@@ -11,6 +11,7 @@ from torch.utils.data import Dataset, DataLoader
 from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
+from .dataset import *
 from .model import *
 from .utils import *
 
@@ -20,17 +21,16 @@ def main():
     hidden_size = opt.hidden_size
     learning_rate = opt.learning_rate
 
-    #Determine device
+    # Determine device
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    train_data_dir = ''
-    dev_data_dir = ''
-    train_data_loader, _ = getDataLoader(train_data_dir, opt.batch_size)
-    dev_data_loader, _ = getDataLoader(dev_data_dir, opt.batch_size)
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size)
+    train_data_loader = data_loaders['train']
+    dev_data_loader = data_loaders['valid']
 
     # Create model
-    model = SampleModel()
+    model = baseline_model()
 
     # Convert device
     model = model.to(device)
@@ -40,7 +40,7 @@ def main():
 
 
     # Create optimizer
-    criterion = nn.CrossEntropyLoss()
+    criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 

@@ -1,12 +1,14 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
-import torchvision
+from torchvision import models
 
-class SampleModel (nn.Module):
-    def __init__ (self):
-        super(SampleModel, self).__init__()
 
-    def forward (self):
-        pass
-        
+def baseline_model(num_classes=39):
+    """
+    Return baseline model (ResNet with fully connected layer replaced).
+    """
+    model = models.resnet152(pretrained=True)
+    num_ftrs = model.fc.in_features
+    model.fc = nn.Linear(num_ftrs, num_classes)
+    return model
+

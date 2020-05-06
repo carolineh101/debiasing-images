@@ -8,8 +8,7 @@ def transform_image(image_size=224, mean=[0.485, 0.456, 0.406], std=[0.229, 0.22
     Transform image.
     """
     transform = transforms.Compose([
-            transforms.Resize(image_size),
-            transforms.CenterCrop(image_size),
+            transforms.Resize((image_size, image_size)),
             transforms.ToTensor(),
             transforms.Normalize(mean, std)
     ])
@@ -26,19 +25,20 @@ def target_transform(target, attr_idx=20):
     return target
 
 
-def load_celeba(dir_name='data/CelebA/', subset_percentage=1, batch_size=32, num_workers=4):
+def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subset_percentage=1,
+                batch_size=32, num_workers=2):
     """
-    Return dataloaders for CelebA, downloading dataset if necessary.
+    Return DataLoaders for CelebA, downloading dataset if necessary.
 
     Params:
     - subset_percentage: Percentage of dataset to include in dataloaders.
     """
-    dataloaders = {}
-    for split in ['train', 'valid', 'test']:
+    data_loaders = {}
+    for split in splits:
         dataset = datasets.CelebA(dir_name + split + '/', split=split, transform=transform_image,
                                   target_transform=target_transform, download=True)
         if subset_percentage < 1:
             dataset = Subset(dataset, range(ceil(subset_percentage * len(dataset))))
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
-        dataloaders[split] = dataloader
-    return dataloaders
+        data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=workers)
+        data_loaders[split] = data_loader
+    return data_loaders
