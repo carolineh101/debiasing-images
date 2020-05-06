@@ -47,9 +47,7 @@ class Classifier(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=512, out_features=512),
             nn.ReLU(),
-            nn.Linear(in_features=512, out_features=512),
-            nn.ReLU(),
-            torch.nn.Softmax(dim=num_classes)
+            nn.Linear(in_features=512, out_features=num_classes)
         )
 
     def forward (self, x):
