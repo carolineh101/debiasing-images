@@ -12,7 +12,7 @@ from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
 from .dataset import *
-from .model import *
+from .model import BaselineModel, OurModel
 from .utils import *
 
 def main():
@@ -30,7 +30,7 @@ def main():
     dev_data_loader = data_loaders['valid']
 
     # Create model
-    model = baseline_model()
+    model = BaselineModel(hidden_size)
 
     # Convert device
     model = model.to(device)

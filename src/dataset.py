@@ -3,6 +3,8 @@ from torch.utils.data import DataLoader, Subset
 from torchvision import datasets, transforms
 
 
+# Transform to modify images for pre-trained ResNet base
+# See for magic #'s: http://pytorch.org/docs/master/torchvision/models.html
 def transform_image(image_size=224, mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]):
     """
     Transform image.
