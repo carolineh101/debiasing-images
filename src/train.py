@@ -26,6 +26,7 @@ def main():
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
+
     data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_size=31)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
@@ -66,10 +67,12 @@ def main():
         model.train()
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
-            for i, (images, targets) in pbar:
+            for i, (images, targets, gender) in pbar:
 
                 # Shape: torch.Size([batch_size, 3, crop_size, crop_size])
                 images = Variable(images.to(device))
+                
+                # Shape: torch.Size([batch_size, 39])
                 targets = Variable(targets.to(device))
 
                 # Zero out buffers

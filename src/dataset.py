@@ -56,6 +56,7 @@ class CelebADataset(Dataset):
             train_indices = torch.from_numpy(np.random.choice(len(self.dataset), size=subset_size, replace=False)) 
             self.dataset = Subset(self.dataset, train_indices)
 
+
     def __len__(self):
         return len(self.dataset)
 
@@ -63,7 +64,12 @@ class CelebADataset(Dataset):
         if torch.is_tensor(idx):
             idx = idx.tolist()
         image, targets = self.dataset[idx]
-        return image, targets
+
+        gender_index = 20
+        targets = torch.cat((targets[:gender_index], targets[gender_index+1:]))
+        gender = targets[gender_index]
+
+        return image, targets, gender
 
 
 
