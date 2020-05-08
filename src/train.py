@@ -155,7 +155,6 @@ def main():
             'optimizer': optimizer.state_dict(),
             'hyp': {
                 'hidden_size': hidden_size,
-                'num_layers': num_layers,
             }
         }
 
@@ -163,7 +162,7 @@ def main():
         torch.save(checkpoint, os.path.join(opt.out_dir, 'last.pkl'))
 
         # Save best checkpoint
-        if eval_acc == best_acc:
+        if mean_accuracy.avg == best_acc:
             torch.save(checkpoint, os.path.join(opt.out_dir, 'best.pkl'))
 
         # Save backup every 10 epochs (optional)
