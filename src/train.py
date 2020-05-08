@@ -16,16 +16,16 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-
     # Model Hyperparams
     hidden_size = opt.hidden_size
     learning_rate = opt.learning_rate
+    save_after_x_epochs = 10
 
     # Determine device
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size)
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=0.0002)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
@@ -41,26 +41,35 @@ def main():
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 
     start_epoch = 0
-    batch_count = len(train_data_loader)
+    best_bleu = 0.0
+    train_batch_count = len(train_data_loader)
 
     #Load if resume
-    if opt.resume:
-        checkpoint = torch.load(os.path.join(opt.out_dir, 'best.pkl'))
+    checkpoint = None
+    if opt.weights != '':
+        checkpoint = torch.load(opt.weights, map_location=device)
         model.load_state_dict(checkpoint['model'])    
-        optimizer.load_state_dict(checkpoint['optimizer']) 
-        start_epoch = checkpoint['epoch']  
+        if opt.resume:
+            if checkpoint['epoch']:
+                start_epoch = checkpoint['epoch'] + 1
+            if checkpoint['best_bleu']:
+                best_bleu = checkpoint['best_bleu']
+            if checkpoint['optimizer']:
+                optimizer.load_state_dict(checkpoint['optimizer']) 
 
     # Train loop
+    pdb.set_trace()
     for epoch in range(start_epoch, opt.num_epochs):
 
         # Set model to train mode
         model.train()
 
-        with tqdm(enumerate(train_data_loader), total=batch_count) as pbar: # progress bar
-            for i, (images) in pbar:
+        with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
+            for i, (images, targets) in pbar:
 
                 # Shape: torch.Size([batch_size, 3, crop_size, crop_size])
                 images = Variable(images.to(device))
+                targets = Variable(targets.to(device))
 
                 # Zero out buffers
                 model.zero_grad()
@@ -68,6 +77,7 @@ def main():
 
                 # Forward pass
                 outputs = model(images)
+                targets = targets.type_as(outputs)
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
@@ -82,7 +92,24 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
+        model.eval()
 
+        dev_batch_count = len(dev_data_loader.dataset)
+        gt = Variable(torch.FloatTensor().to(device))
+        pred = Variable(torch.FloatTensor().to(device))
+
+        with tqdm(enumerate(data_loader.dataset), total=data_count) as pbar:
+            pbar.set_description('    BLEU score: Computing...')
+            for i, (image, targets) in pbar:
+                    images = Variable(images.to(device))
+                    targets = Variable(targets.to(device))
+
+                    gt = torch.cat((gt, targets), 0)
+
+                    with torch.no_grad():
+                        output = model(images)
+                        output = torch.sigmoid(output)
+                    pred = torch.cat((pred, output.data), 0)
 
         # Create output dir
         if not os.path.exists(opt.out_dir):
