@@ -48,9 +48,15 @@ class CelebADataset(Dataset):
 
     def __init__(self, split, dir_name='data/CelebA/', subset_percentage = 1):
         self.transform_image = transform_image
-        self.target_transform = target_transform
-        self.dataset = datasets.CelebA(dir_name + split + '/', split=split, transform=transform_image,
-                                target_transform = target_transform, download=True)
+        # self.target_transform = target_transform
+        self.dataset = datasets.CelebA(
+            dir_name + split + '/',
+            split=split,
+            transform=transform_image,
+            # target_transform=target_transform,
+            target_transform=None,
+            download=True
+        )
 
         if subset_percentage < 1:
             self.dataset = Subset(self.dataset, range(ceil(subset_percentage * len(self.dataset))))
