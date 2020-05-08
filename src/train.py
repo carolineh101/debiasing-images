@@ -45,6 +45,8 @@ def main():
 
     start_epoch = 0
     best_acc = 0.0
+    save_best = False
+
     train_batch_count = len(train_data_loader)
     dev_batch_count = len(dev_data_loader)
 
@@ -153,6 +155,12 @@ def main():
             f.write('{}\n'.format(s_train))
             f.write('{}\n'.format(s_eval))
 
+        # Check against best accuracy
+        mean_eval_acc = mean_accuracy.avg.cpu().item()
+        if mean_eval_acc > best_acc:
+            best_acc = mean_eval_acc
+            save_best = True
+
         # Create checkpoint
         checkpoint = {
             'epoch': epoch,
@@ -168,9 +176,9 @@ def main():
         torch.save(checkpoint, os.path.join(opt.out_dir, 'last.pkl'))
 
         # Save best checkpoint
-        if mean_accuracy.avg > best_acc:
-            best_acc = mean_accuracy
+        if save_best:
             torch.save(checkpoint, os.path.join(opt.out_dir, 'best.pkl'))
+            save_best = False
 
         # Save backup every 10 epochs (optional)
         if (epoch + 1) % save_after_x_epochs == 0:
