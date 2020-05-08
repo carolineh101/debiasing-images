@@ -16,6 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
+    pdb.set_trace()
     # Model Hyperparams
     hidden_size = opt.hidden_size
     learning_rate = opt.learning_rate
@@ -25,7 +26,7 @@ def main():
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=0.0002)
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_size=31)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
@@ -86,30 +87,34 @@ def main():
 
                 optimizer.step()
 
-                s = ('%10s Loss: %.4f, Perplexity: %5.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), np.exp(loss.item()))
+                s = ('%10s Loss: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item())
                 pbar.set_description(s)
 
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
+        pdb.set_trace()
         model.eval()
 
         dev_batch_count = len(dev_data_loader.dataset)
         gt = Variable(torch.FloatTensor().to(device))
         pred = Variable(torch.FloatTensor().to(device))
 
-        with tqdm(enumerate(data_loader.dataset), total=data_count) as pbar:
-            pbar.set_description('    BLEU score: Computing...')
+        with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
+            pbar.set_description('    Evaluating...')
             for i, (image, targets) in pbar:
                     images = Variable(images.to(device))
                     targets = Variable(targets.to(device))
 
-                    gt = torch.cat((gt, targets), 0)
-
                     with torch.no_grad():
                         output = model(images)
                         output = torch.sigmoid(output)
+
+                    targets = targets.type_as(output)
+                    gt = torch.cat((gt, targets), 0)
                     pred = torch.cat((pred, output.data), 0)
+                    
+        #Evaluate gt vs pred here!
 
         # Create output dir
         if not os.path.exists(opt.out_dir):
