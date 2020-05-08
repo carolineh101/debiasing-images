@@ -88,7 +88,8 @@ def main():
                 genders = Variable(genders.to(device))
 
                 # Zero out buffers
-                model.zero_grad()
+                # model.zero_grad() # either model or optimizer.zero_grad() is fine
+                optimizer.zero_grad()
 
                 # Forward pass
                 outputs = model(images)
