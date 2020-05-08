@@ -106,7 +106,7 @@ def main():
                 loss.backward()
                 optimizer.step()
 
-                s = ('%10s Loss: %.4f, Perplexity: %5.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), np.exp(loss.item()), acc)
+                s = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
                 pbar.set_description(s)
 
         # end batch ------------------------------------------------------------------------------------------------
