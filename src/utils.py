@@ -26,3 +26,42 @@ def getDevice(gpu_id=None):
             
     print('Device:', device)
     return device
+
+
+def calculateAccuracy(outputs, targets, threshold=0.5):
+    """
+        Calculates the average accuracy.
+          outputs: Tensor
+          targets: Tensor
+          threshold: float
+    """
+
+    preds = outputs > threshold
+
+    average_accuracy = (preds == targets).sum() * 1.0 / (targets.size(0) * targets.size(1))
+
+    return average_accuracy
+
+def calculateEqualityGap(outputs, targets):
+    return 0.0
+
+def calculateParityGap(outputs, targets):
+    return 0.0
+
+class AverageMeter(object):
+    """Computes and stores the average and current value"""
+
+    def __init__(self):
+        self.reset()
+
+    def reset(self):
+        self.val = 0
+        self.avg = 0
+        self.sum = 0
+        self.count = 0
+
+    def update(self, val, n=1):
+        self.val = val
+        self.sum += val * n
+        self.count += n
+        self.avg = self.sum / self.count

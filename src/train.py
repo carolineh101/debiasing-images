@@ -41,8 +41,9 @@ def main():
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 
     start_epoch = 0
-    best_bleu = 0.0
+    best_acc = 0.0
     train_batch_count = len(train_data_loader)
+    dev_batch_count = len(dev_data_loader.dataset)
 
     #Load if resume
     checkpoint = None
@@ -64,8 +65,13 @@ def main():
         # Set model to train mode
         model.train()
 
+        # Initialize meters
+        mean_accuracy = AverageMeter()
+        mean_equality_gap = AverageMeter()
+        mean_parity_gap = AverageMeter()
+
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
-            for i, (images, targets, gender) in pbar:
+            for i, (images, targets, genders) in pbar:
 
                 # Shape: torch.Size([batch_size, 3, crop_size, crop_size])
                 images = Variable(images.to(device))
@@ -73,9 +79,11 @@ def main():
                 # Shape: torch.Size([batch_size, 39])
                 targets = Variable(targets.to(device))
 
+                # Shape: torch.Size([batch_size])
+                genders = Variable(genders.to(device))
+
                 # Zero out buffers
                 model.zero_grad()
-
 
                 # Forward pass
                 outputs = model(images)
@@ -84,11 +92,18 @@ def main():
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
                 loss = criterion(outputs, targets)
-                loss.backward()
 
+                # Calculate accuracy
+                train_acc = calculateAccuracy(outputs, targets)
+
+                # Update averages
+                mean_accuracy.update(train_acc, images.size(0))
+
+                # Backward pass
+                loss.backward()
                 optimizer.step()
 
-                s = ('%10s Loss: %.4f, Perplexity: %5.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), np.exp(loss.item()))
+                s = ('%10s Loss: %.4f, Perplexity: %5.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), np.exp(loss.item()), acc)
                 pbar.set_description(s)
 
         # end batch ------------------------------------------------------------------------------------------------
@@ -96,22 +111,31 @@ def main():
         # Evaluate
         model.eval()
 
-        dev_batch_count = len(dev_data_loader.dataset)
-        gt = Variable(torch.FloatTensor().to(device))
-        pred = Variable(torch.FloatTensor().to(device))
+        # Initialize meters
+        mean_accuracy = AverageMeter()
+        mean_equality_gap = AverageMeter()
+        mean_parity_gap = AverageMeter()
 
-        with tqdm(enumerate(data_loader.dataset), total=data_count) as pbar:
-            pbar.set_description('    BLEU score: Computing...')
-            for i, (image, targets) in pbar:
-                    images = Variable(images.to(device))
-                    targets = Variable(targets.to(device))
+        with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
+            for i, (images, targets, genders) in pbar:
+                images = Variable(images.to(device))
+                targets = Variable(targets.to(device))
+                genders = Variable(genders.to(device))
 
-                    gt = torch.cat((gt, targets), 0)
+                # gt = torch.cat((gt, targets), 0)
 
-                    with torch.no_grad():
-                        output = model(images)
-                        output = torch.sigmoid(output)
-                    pred = torch.cat((pred, output.data), 0)
+                with torch.no_grad():
+                    # Forward pass
+                    outputs = model(images)
+                    targets = targets.type_as(outputs)
+
+                    # Calculate accuracy
+                    eval_acc = calculateAccuracy(outputs, targets)
+
+                    # Update averages
+                    mean_accuracy.update(eval_acc, images.size(0))
+
+                # pred = torch.cat((pred, output.data), 0)
 
         # Create output dir
         if not os.path.exists(opt.out_dir):
@@ -136,7 +160,7 @@ def main():
         torch.save(checkpoint, os.path.join(opt.out_dir, 'last.pkl'))
 
         # Save best checkpoint
-        if bleu == best_bleu:
+        if eval_acc == best_acc:
             torch.save(checkpoint, os.path.join(opt.out_dir, 'best.pkl'))
 
         # Save backup every 10 epochs (optional)
