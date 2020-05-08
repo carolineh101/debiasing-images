@@ -16,6 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
+    pdb.set_trace()
     # Model Hyperparams
     hidden_size = opt.hidden_size
     learning_rate = opt.learning_rate
@@ -25,7 +26,8 @@ def main():
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=0.02)
+
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_size=31)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
@@ -109,6 +111,7 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
+        pdb.set_trace()
         model.eval()
 
         # Initialize meters
