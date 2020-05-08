@@ -39,8 +39,8 @@ def main():
     model = model.to(device)
 
     # Create optimizer
-    criterion = nn.BCELoss()  # For multi-label classification
-    # criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
+    # criterion = nn.BCELoss()  # For multi-label classification
+    criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 
