@@ -185,7 +185,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-epochs', type=int, required=False, default=400, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.001, help='learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
-    parser.add_argument('--hidden_size', type=int, required=False, default=1024, help='dim of LSTM hidden layer')
+    parser.add_argument('--hidden_size', type=int, required=False, default=1024, help='dim of hidden layer')
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
