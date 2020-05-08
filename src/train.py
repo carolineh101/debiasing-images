@@ -16,7 +16,8 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
+    # pdb.set_trace()
+    
     # Model Hyperparams
     hidden_size = opt.hidden_size
     learning_rate = opt.learning_rate
@@ -61,7 +62,7 @@ def main():
                 optimizer.load_state_dict(checkpoint['optimizer']) 
 
     # Train loop
-    pdb.set_trace()
+    # pdb.set_trace()
     for epoch in range(start_epoch, opt.num_epochs):
 
         # Set model to train mode
@@ -111,7 +112,7 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
-        pdb.set_trace()
+        # pdb.set_trace()
         model.eval()
 
         # Initialize meters
