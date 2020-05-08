@@ -28,7 +28,7 @@ def main():
 
     # Create data loaders
 
-    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_size=opt.dataset_fraction)
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
@@ -180,7 +180,7 @@ def main():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument('--dataset', type=str, required=True, help='dataset path. Must contain training_set and eval_set subdirectories.')
-    parser.add_argument('--dataset-fraction', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
+    parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=400, help='number of epochs')
