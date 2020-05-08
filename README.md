@@ -9,7 +9,7 @@ pip install -r requirements.txt
 
 # Run training
 ```
-python src/train.py --dataset dataset --out-dir output
+python src/train.py --out-dir output
 ```
 
 

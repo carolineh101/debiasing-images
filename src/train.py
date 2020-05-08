@@ -46,7 +46,7 @@ def main():
     start_epoch = 0
     best_acc = 0.0
     train_batch_count = len(train_data_loader)
-    dev_batch_count = len(dev_data_loader.dataset)
+    dev_batch_count = len(dev_data_loader)
 
     #Load if resume
     checkpoint = None
