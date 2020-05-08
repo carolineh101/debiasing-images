@@ -106,8 +106,8 @@ def main():
                 loss.backward()
                 optimizer.step()
 
-                s = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
-                pbar.set_description(s)
+                s_train = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
+                pbar.set_description(s_train)
 
         # end batch ------------------------------------------------------------------------------------------------
 
@@ -139,6 +139,9 @@ def main():
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
 
+                    s_eval = ('%10s Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg)
+                    pbar.set_description(s_eval)
+
                 # pred = torch.cat((pred, output.data), 0)
 
         # Create output dir
@@ -147,7 +150,8 @@ def main():
 
         # Log results
         with open(opt.log, 'a+') as f:
-            f.write('{}\n'.format(s))
+            f.write('{}\n'.format(s_train))
+            f.write('{}\n'.format(s_eval))
 
         # Create checkpoint
         checkpoint = {
