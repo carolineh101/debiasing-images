@@ -56,8 +56,8 @@ def main():
         if opt.resume:
             if checkpoint['epoch']:
                 start_epoch = checkpoint['epoch'] + 1
-            if checkpoint['best_bleu']:
-                best_bleu = checkpoint['best_bleu']
+            if checkpoint['best_acc']:
+                best_acc = checkpoint['best_acc']
             if checkpoint['optimizer']:
                 optimizer.load_state_dict(checkpoint['optimizer']) 
 
@@ -158,6 +158,7 @@ def main():
             'epoch': epoch,
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
+            'best_acc': best_acc,
             'hyp': {
                 'hidden_size': hidden_size,
             }
@@ -167,7 +168,8 @@ def main():
         torch.save(checkpoint, os.path.join(opt.out_dir, 'last.pkl'))
 
         # Save best checkpoint
-        if mean_accuracy.avg == best_acc:
+        if mean_accuracy.avg > best_acc:
+            best_acc = mean_accuracy
             torch.save(checkpoint, os.path.join(opt.out_dir, 'best.pkl'))
 
         # Save backup every 10 epochs (optional)
