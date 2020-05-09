@@ -42,11 +42,48 @@ def calculateAccuracy(outputs, targets, threshold=0.5):
 
     return average_accuracy
 
-def calculateEqualityGap(outputs, targets):
-    return 0.0
+def calculateConfusionMatrix(preds, targets):
+    """
+    Adapted from https://gist.github.com/the-bass/cae9f3976866776dea17a5049013258d
+    """
+    confusion_vector = preds / targets
+    # Element-wise division of the 2 tensors returns a new tensor which holds a
+    # unique value for each case:
+    #   1     where prediction and truth are 1 (True Positive)
+    #   inf   where prediction is 1 and truth is 0 (False Positive)
+    #   nan   where prediction and truth are 0 (True Negative)
+    #   0     where prediction is 0 and truth is 1 (False Negative)
+    true_positives = torch.sum(confusion_vector == 1, 0)
+    false_positives = torch.sum(confusion_vector == float('inf'), 0)
+    true_negatives = torch.sum(torch.isnan(confusion_vector), 0)
+    false_negatives = torch.sum(confusion_vector == 0, 0)
+    return true_positives, false_positives, true_negatives, false_negatives
 
-def calculateParityGap(outputs, targets):
-    return 0.0
+def calculateProbCorrect(preds, targets, y):
+    t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
+    return t_p / (t_p + f_n), t_n / (t_n + f_p)
+
+def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
+    preds = torch.sigmoid(outputs) > threshold
+    prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(preds[genders], targets[genders])
+    prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(preds[genders == 0], targets[genders == 0])
+    equality_gap_1 = (prob_correct_1_m - prob_correct_1_f).abs()
+    equality_gap_0 = (prob_correct_0_m - prob_correct_0_f).abs()
+    average_equality_gap_1 = equality_gap_1.sum() * 1.0 / targets.size(1)
+    average_equality_gap_0 = equality_gap_0.sum() * 1.0 / targets.size(1)
+    return average_equality_gap_0, average_equality_gap_1
+
+def calculateProbTrue(preds, targets):
+    t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
+    return (t_p + f_p) / preds.size(0)
+
+def calculateParityGap(outputs, targets, genders, threshold=0.5):
+    preds = torch.sigmoid(outputs) > threshold
+    prob_true_m = calculateProbTrue(preds[genders], targets[genders])
+    prob_true_f = calculateProbTrue(preds[genders == 0], targets[genders == 0])
+    parity_gap = (prob_true_m - prob_true_f).abs()
+    average_parity_gap = parity_gap.sum() * 1.0 / targets.size(1)
+    return average_parity_gap
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
