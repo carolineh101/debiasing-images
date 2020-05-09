@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 
 def getDevice(gpu_id=None):
 
@@ -37,7 +36,7 @@ def calculateAccuracy(outputs, targets, threshold=0.5):
           threshold: float
     """
 
-    preds = F.sigmoid(outputs) > threshold
+    preds = torch.sigmoid(outputs) > threshold
 
     average_accuracy = (preds == targets).sum() * 1.0 / (targets.size(0) * targets.size(1))
 
