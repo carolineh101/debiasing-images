@@ -16,7 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    # pdb.set_trace()
+    pdb.set_trace()
     
     # Model Hyperparams
     hidden_size = opt.hidden_size
@@ -116,7 +116,7 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
-        # pdb.set_trace()
+        pdb.set_trace()
         model.eval()
 
         # Initialize meters
