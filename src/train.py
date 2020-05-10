@@ -7,16 +7,15 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import datasets, models, transforms
+
 from tqdm import tqdm
 
-from dataset import *
+from dataset import load_celeba
 from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
+    # pdb.set_trace()
     
     # Model Hyperparams
     hidden_size = opt.hidden_size
@@ -39,7 +38,6 @@ def main():
     model = model.to(device)
 
     # Create optimizer
-    # criterion = nn.BCELoss()  # For multi-label classification
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)

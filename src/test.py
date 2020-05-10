@@ -5,13 +5,9 @@ import pdb
 import torch
 import torchvision
 from torch.autograd import Variable
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
-from dataset import *
+from dataset import load_celeba
 from model import BaselineModel, OurModel
 from utils import *
 

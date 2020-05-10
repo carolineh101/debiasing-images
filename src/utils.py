@@ -65,7 +65,7 @@ def calculateProbCorrect(preds, targets):
     return torch.true_divide(t_p, t_p + f_n), torch.true_divide(t_n, t_n + f_p)
 
 def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
-    pdb.set_trace()
+    # pdb.set_trace()
     preds = torch.sigmoid(outputs) > threshold
     prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(preds[genders], targets[genders])
     prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(preds[genders == 0], targets[genders == 0])
