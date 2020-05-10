@@ -20,5 +20,10 @@ Example with more command line parameters
 
 # Evaluate model
 ```
-python src/test.py
+python src/test.py --weights output/best.pkl
 ```
+
+# Pre-trained weights
+
+Baseline model: [Google Drive](https://drive.google.com/file/d/1p-gH5-JYwBkVf7aObgdKWOwHgsBWxyo_/view?usp=sharing)
+Our model: Coming soon

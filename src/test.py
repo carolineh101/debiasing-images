@@ -16,14 +16,14 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
+    # pdb.set_trace()
 
     # Determine device
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    data_loaders = load_celeba(splits=['valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
-    test_data_loader = data_loaders['valid']
+    data_loaders = load_celeba(splits=['test'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
+    test_data_loader = data_loaders['test']
 
     # Load checkpoint
     checkpoint = torch.load(opt.weights, map_location=device)
