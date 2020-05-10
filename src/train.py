@@ -16,7 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    # pdb.set_trace()
+    pdb.set_trace()
     
     # Model Hyperparams
     hidden_size = opt.hidden_size
@@ -73,7 +73,8 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
-        mean_equality_gap = AverageMeter()
+        mean_equality_gap_0 = AverageMeter()
+        mean_equality_gap_1 = AverageMeter()
         mean_parity_gap = AverageMeter()
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
@@ -95,6 +96,7 @@ def main():
                 # Forward pass
                 outputs = model(images)
                 targets = targets.type_as(outputs)
+                genders = genders.type_as(outputs)
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
@@ -103,25 +105,33 @@ def main():
                 # Calculate accuracy
                 train_acc = calculateAccuracy(outputs, targets)
 
+                # Calculate fairness metrics
+                train_equality_gap_0, train_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
+                train_parity_gap = calculateParityGap(outputs, targets, genders)
+
                 # Update averages
                 mean_accuracy.update(train_acc, images.size(0))
+                mean_equality_gap_0.update(train_equality_gap_0, images.size(0))
+                mean_equality_gap_1.update(train_equality_gap_1, images.size(0))
+                mean_parity_gap.update(train_parity_gap, images.size(0))
 
                 # Backward pass
                 loss.backward()
                 optimizer.step()
 
-                s_train = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
+                s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                 pbar.set_description(s_train)
 
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
-        # pdb.set_trace()
+        pdb.set_trace()
         model.eval()
 
         # Initialize meters
         mean_accuracy = AverageMeter()
-        mean_equality_gap = AverageMeter()
+        mean_equality_gap_0 = AverageMeter()
+        mean_equality_gap_1 = AverageMeter()
         mean_parity_gap = AverageMeter()
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
@@ -136,14 +146,22 @@ def main():
                     # Forward pass
                     outputs = model(images)
                     targets = targets.type_as(outputs)
+                    genders = genders.type_as(outputs)
 
                     # Calculate accuracy
                     eval_acc = calculateAccuracy(outputs, targets)
 
+                    # Calculate fairness metrics
+                    eval_equality_gap_0, eval_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
+                    eval_parity_gap = calculateParityGap(outputs, targets, genders)
+
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
+                    mean_equality_gap_0.update(eval_equality_gap_0, images.size(0))
+                    mean_equality_gap_1.update(eval_equality_gap_1, images.size(0))
+                    mean_parity_gap.update(eval_parity_gap, images.size(0))
 
-                    s_eval = ('%10s Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg)
+                    s_eval = ('%10s Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                     pbar.set_description(s_eval)
 
                 # pred = torch.cat((pred, output.data), 0)
