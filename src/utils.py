@@ -1,4 +1,5 @@
 import torch
+import pdb
 
 def getDevice(gpu_id=None):
 
@@ -59,11 +60,12 @@ def calculateConfusionMatrix(preds, targets):
     false_negatives = torch.sum(confusion_vector == 0, 0)
     return true_positives, false_positives, true_negatives, false_negatives
 
-def calculateProbCorrect(preds, targets, y):
+def calculateProbCorrect(preds, targets):
     t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
-    return t_p / (t_p + f_n), t_n / (t_n + f_p)
+    return torch.true_divide(t_p, t_p + f_n), torch.true_divide(t_n, t_n + f_p)
 
 def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
+    pdb.set_trace()
     preds = torch.sigmoid(outputs) > threshold
     prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(preds[genders], targets[genders])
     prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(preds[genders == 0], targets[genders == 0])
@@ -75,7 +77,7 @@ def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
 
 def calculateProbTrue(preds, targets):
     t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
-    return (t_p + f_p) / preds.size(0)
+    return torch.true_divide(t_p + f_p, preds.size(0))
 
 def calculateParityGap(outputs, targets, genders, threshold=0.5):
     preds = torch.sigmoid(outputs) > threshold
@@ -102,7 +104,4 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-<<<<<<< HEAD
 
-=======
->>>>>>> f930bc029b5a8f0b1ccea5a1790191b062622bf0

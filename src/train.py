@@ -130,7 +130,8 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
-        mean_equality_gap = AverageMeter()
+        mean_equality_gap_0 = AverageMeter()
+        mean_equality_gap_1 = AverageMeter()
         mean_parity_gap = AverageMeter()
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
