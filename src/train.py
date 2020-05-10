@@ -7,16 +7,15 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import datasets, models, transforms
+
 from tqdm import tqdm
 
-from dataset import *
+from dataset import load_celeba
 from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
+    # pdb.set_trace()
     
     # Model Hyperparams
     hidden_size = opt.hidden_size
@@ -39,7 +38,6 @@ def main():
     model = model.to(device)
 
     # Create optimizer
-    # criterion = nn.BCELoss()  # For multi-label classification
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)
@@ -217,7 +215,7 @@ if __name__ == '__main__':
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
-    parser.add_argument('--num-epochs', type=int, required=False, default=400, help='number of epochs')
+    parser.add_argument('--num-epochs', type=int, required=False, default=100, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.001, help='learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')

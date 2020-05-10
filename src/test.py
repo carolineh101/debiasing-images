@@ -5,40 +5,34 @@ import pdb
 import torch
 import torchvision
 from torch.autograd import Variable
-import torch.nn as nn
-import torch.optim as optim
-from torch.utils.data import Dataset, DataLoader
-from torchvision import datasets, models, transforms
 from tqdm import tqdm
 
-from dataset import *
+from dataset import load_celeba
 from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
-    
-    # Model Hyperparams
-    hidden_size = opt.hidden_size
+    # pdb.set_trace()
 
     # Determine device
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-
     data_loaders = load_celeba(splits=['test'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
-    test_data_loader = data_loaders['valid']
+    test_data_loader = data_loaders['test']
+
+    # Load checkpoint
+    checkpoint = torch.load(opt.weights, map_location=device)
 
     # Create model
-    model = BaselineModel(hidden_size)
+    model = BaselineModel(checkpoint['hyp']['hidden_size'])
 
     # Convert device
     model = model.to(device)
 
     test_batch_count = len(test_data_loader)
 
-    #load model
-    checkpoint = torch.load(opt.weights, map_location=device)
+    # Load model
     model.load_state_dict(checkpoint['model'])    
 
     # Evaluate
@@ -88,11 +82,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument('--dataset', type=str, required=True, help='dataset path. Must contain training_set and eval_set subdirectories.')
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
-    #parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
-    parser.add_argument('--weights', '-w', type=str, required=True, default='', help='weights to preload into model')
-    parser.add_argument('--num-epochs', type=int, required=False, default=400, help='number of epochs')
+    parser.add_argument('--weights', '-w', type=str, required=True, help='weights to preload into model')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
-    parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')
     parser.add_argument('--log', type=str, required=False, default='test.log', help='path to log file')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
     opt = parser.parse_args()

@@ -130,3 +130,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Dataset
+data
+
+# Model checkpoints/outputs
+checkpoints
+outputs

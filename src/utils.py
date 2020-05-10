@@ -47,7 +47,7 @@ def calculateConfusionMatrix(preds, targets):
     """
     Adapted from https://gist.github.com/the-bass/cae9f3976866776dea17a5049013258d
     """
-    confusion_vector = preds / targets
+    confusion_vector = torch.true_divide(preds, targets)
     # Element-wise division of the 2 tensors returns a new tensor which holds a
     # unique value for each case:
     #   1     where prediction and truth are 1 (True Positive)
@@ -62,10 +62,13 @@ def calculateConfusionMatrix(preds, targets):
 
 def calculateProbCorrect(preds, targets):
     t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
-    return torch.true_divide(t_p, t_p + f_n), torch.true_divide(t_n, t_n + f_p)
+    prob_correct_1 = torch.true_divide(t_p, t_p + f_n)
+    prob_correct_0 = torch.true_divide(t_n, t_n + f_p)
+    for prob_correct in [prob_correct_1, prob_correct_0]:
+        prob_correct[torch.isnan(prob_correct)] = 0
+    return prob_correct_1, prob_correct_0
 
 def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
-    pdb.set_trace()
     preds = torch.sigmoid(outputs) > threshold
     prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(preds[genders], targets[genders])
     prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(preds[genders == 0], targets[genders == 0])
@@ -104,4 +107,3 @@ class AverageMeter(object):
         self.sum += val * n
         self.count += n
         self.avg = self.sum / self.count
-
