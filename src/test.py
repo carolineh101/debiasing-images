@@ -36,8 +36,7 @@ def main():
 
     test_batch_count = len(test_data_loader)
 
-    #load model
-    checkpoint = torch.load(opt.weights, map_location=device)
+    # Load model
     model.load_state_dict(checkpoint['model'])    
 
     # Evaluate
