@@ -26,7 +26,7 @@ def main():
 
     # Create data loaders
 
-    data_loaders = load_celeba(splits=['valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
+    data_loaders = load_celeba(splits=['test'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
     test_data_loader = data_loaders['valid']
 
     # Create model
