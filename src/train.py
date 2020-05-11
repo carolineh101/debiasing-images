@@ -94,7 +94,7 @@ def main():
                 # Forward pass
                 outputs = model(images)
                 targets = targets.type_as(outputs)
-                genders = genders.type_as(outputs)
+                genders = genders.type_as(outputs).bool()
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
@@ -123,7 +123,7 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
-        pdb.set_trace()
+        # pdb.set_trace()
         model.eval()
 
         # Initialize meters
@@ -144,7 +144,7 @@ def main():
                     # Forward pass
                     outputs = model(images)
                     targets = targets.type_as(outputs)
-                    genders = genders.type_as(outputs)
+                    genders = genders.type_as(outputs).bool()
 
                     # Calculate accuracy
                     eval_acc = calculateAccuracy(outputs, targets)
