@@ -123,7 +123,7 @@ def main():
         # end batch ------------------------------------------------------------------------------------------------
 
         # Evaluate
-        pdb.set_trace()
+        # pdb.set_trace()
         model.eval()
 
         # Initialize meters
@@ -215,8 +215,8 @@ if __name__ == '__main__':
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
-    parser.add_argument('--num-epochs', type=int, required=False, default=100, help='number of epochs')
-    parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.001, help='learning rate')
+    parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
+    parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')
     parser.add_argument('--resume', action='store_true', help='resume training')

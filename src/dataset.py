@@ -20,14 +20,6 @@ def transform_image(image, image_size=224, mean=[0.485, 0.456, 0.406], std=[0.22
     return transform(image)
 
 
-def target_transform(target, attr_idx=20):
-    """
-    Transform target labels to remove attribute at given index.
-    Note: 20 is index for gender.
-    """
-    return torch.cat((target[:attr_idx], target[attr_idx+1:]))
-
-
 def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subset_percentage=1,
                 batch_size=32, num_workers=1):
     """
@@ -46,14 +38,13 @@ def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subs
 
 class CelebADataset(Dataset):
 
-    def __init__(self, split, dir_name='data/CelebA/', subset_percentage = 1):
+    def __init__(self, split, dir_name='data/', subset_percentage = 1):
         self.transform_image = transform_image
         # self.target_transform = target_transform
         self.dataset = datasets.CelebA(
-            dir_name + split + '/',
+            dir_name,
             split=split,
             transform=transform_image,
-            # target_transform=target_transform,
             target_transform=None,
             download=True
         )
