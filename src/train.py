@@ -94,7 +94,7 @@ def main():
                 # Forward pass
                 outputs = model(images)
                 targets = targets.type_as(outputs)
-                genders = genders.type_as(outputs)
+                genders = genders.type_as(outputs).bool()
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
@@ -144,7 +144,7 @@ def main():
                     # Forward pass
                     outputs = model(images)
                     targets = targets.type_as(outputs)
-                    genders = genders.type_as(outputs)
+                    genders = genders.type_as(outputs).bool()
 
                     # Calculate accuracy
                     eval_acc = calculateAccuracy(outputs, targets)
