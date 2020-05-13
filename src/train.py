@@ -53,9 +53,12 @@ def main():
     if not baseline:
         adversarial_criterion = nn.BCEWithLogitsLoss()
 
-    # Create optimizer
-    params = list(model.parameters())
-    optimizer = torch.optim.Adam(params, lr = learning_rate)
+    # Create optimizers
+    primary_optimizer_params = list(model.encoder.parameters()) + list(model.classifer.parameters())
+    primary_optimizer = torch.optim.Adam(primary_optimizer_params, lr = learning_rate)
+    if not baseline:
+        adversarial_optimizer_params = list(model.adv_head.parameters())
+        adversarial_optimizer = torch.optim.Adam(adversarial_optimizer_params, lr = learning_rate)
 
     start_epoch = 0
     best_acc = 0.0
@@ -76,8 +79,10 @@ def main():
                 best_acc = checkpoint['best_acc']
             if checkpoint['lambd']:
                 best_acc = checkpoint['lambd']
-            if checkpoint['optimizer']:
-                optimizer.load_state_dict(checkpoint['optimizer']) 
+            if checkpoint['optimizers']['primary']:
+                primary_optimizer.load_state_dict(checkpoint['optimizers']['primary'])
+            if checkpoint['optimizers']['adversarial']:
+                adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
 
     # Train loop
     # pdb.set_trace()
@@ -106,7 +111,8 @@ def main():
 
                 # Zero out buffers
                 # model.zero_grad() # either model or optimizer.zero_grad() is fine
-                optimizer.zero_grad()
+                primary_optimizer.zero_grad()
+                adversarial_optimizer.zero_grad()
 
                 # Forward pass
                 outputs, a = model(images)
@@ -138,9 +144,17 @@ def main():
                 mean_equality_gap_1.update(train_equality_gap_1, images.size(0))
                 mean_parity_gap.update(train_parity_gap, images.size(0))
 
-                # Backward pass
+                # Backward pass (Primary)
                 loss.backward()
-                optimizer.step()
+                primary_optimizer.step()
+
+                # Zero out buffers
+                primary_optimizer.zero_grad()
+                adversarial_optimizer.zero_grad()
+
+                # Backward pass (Adversarial)
+                adversarial_loss.backward()
+                adversarial_optimizer.step()
 
                 if baseline:
                     s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
@@ -213,7 +227,10 @@ def main():
         checkpoint = {
             'epoch': epoch,
             'model': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
+            'optimizers': {
+                'primary': primary_optimizer.state_dict(),
+                'adversarial': adversarial_optimizer.state_dict() if not baseline else None,
+            },
             'best_acc': best_acc,
             'baseline': baseline,
             'hyp': {
