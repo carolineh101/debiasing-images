@@ -70,19 +70,20 @@ class AdversarialHead(nn.Module):
     def forward (self, x):
 
         out = self.model(x)
-        return out
+        out_detached = self.model(x.detach())
+        return out, out_detached
 
 class BaselineModel(nn.Module):
     def __init__ (self, hidden_size, num_classes=39):
         super(BaselineModel, self).__init__()
 
         self.encoder = Encoder(hidden_size)
-        self.classifer = Classifier(hidden_size, num_classes)
+        self.classifier = Classifier(hidden_size, num_classes)
 
     def forward (self, images):
 
         h = self.encoder(images)
-        y = self.classifer(h)
+        y = self.classifier(h)
         return y, None
 
 class OurModel(nn.Module):
@@ -90,7 +91,7 @@ class OurModel(nn.Module):
         super(OurModel, self).__init__()
 
         self.encoder = Encoder(hidden_size)
-        self.classifer = Classifier(hidden_size, num_classes)
+        self.classifier = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
 
     # def forward (self, images, images_subset):
@@ -101,8 +102,8 @@ class OurModel(nn.Module):
         # h_images_subset = self.encoder(images_subset)
         # a = self.adv_head(h_images_subset)
         h = self.encoder(images)
-        y = self.classifer(h)
-        a = self.adv_head(h)
-        return y, a
+        y = self.classifier(h)
+        a, a_detached = self.adv_head(h)
+        return y, a, a_detached
 
 

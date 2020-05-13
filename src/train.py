@@ -54,7 +54,7 @@ def main():
         adversarial_criterion = nn.BCEWithLogitsLoss()
 
     # Create optimizers
-    primary_optimizer_params = list(model.encoder.parameters()) + list(model.classifer.parameters())
+    primary_optimizer_params = list(model.encoder.parameters()) + list(model.classifier.parameters())
     primary_optimizer = torch.optim.Adam(primary_optimizer_params, lr = learning_rate)
     if not baseline:
         adversarial_optimizer_params = list(model.adv_head.parameters())
@@ -84,6 +84,8 @@ def main():
             if checkpoint['optimizers']['adversarial']:
                 adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
 
+    # torch.autograd.set_detect_anomaly(True)
+
     # Train loop
     # pdb.set_trace()
     for epoch in range(start_epoch, opt.num_epochs):
@@ -109,47 +111,38 @@ def main():
                 # Shape: torch.Size([batch_size])
                 genders = Variable(genders.to(device))
 
-                # Zero out buffers
-                # model.zero_grad() # either model or optimizer.zero_grad() is fine
-                primary_optimizer.zero_grad()
-                adversarial_optimizer.zero_grad()
-
                 # Forward pass
-                outputs, a = model(images)
+                outputs, a, a_detached = model(images)
                 targets = targets.type_as(outputs)
                 genders = genders.type_as(outputs)
 
+                # Zero out buffers
+                # model.zero_grad() # either model or optimizer.zero_grad() is fine
+                primary_optimizer.zero_grad()
+
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
+                classification_loss = criterion(outputs, targets)
+
                 if baseline:
-                    classification_loss = criterion(outputs, targets)
                     loss = classification_loss
                 else:
                     adversarial_loss = adversarial_criterion(a, genders)
+                    loss = classification_loss - lambd * adversarial_loss
+
+                    # Backward pass (Primary)
+                    loss.backward()
+                    primary_optimizer.step()
+
+                    # Zero out buffers
+                    adversarial_optimizer.zero_grad()
+
+                    # Calculate loss for adversarial head
+                    adversarial_loss = adversarial_criterion(a_detached, genders)
 
                     # Backward pass (Adversarial)
                     adversarial_loss.backward()
                     adversarial_optimizer.step()
-
-                    # Zero out buffers
-                    primary_optimizer.zero_grad()
-                    adversarial_optimizer.zero_grad()
-
-                    # Forward pass (again)
-                    # Get some weird error if don't do forward again
-                    outputs, a = model(images)
-                    targets = targets.type_as(outputs)
-                    genders = genders.type_as(outputs)
-
-                    # CrossEntropyLoss is expecting:
-                    # Input:  (N, C) where C = number of classes
-                    classification_loss = criterion(outputs, targets)
-                    adversarial_loss = adversarial_criterion(a, genders)
-                    loss = classification_loss - lambd * adversarial_loss
-
-                # Backward pass (Primary)
-                loss.backward()
-                primary_optimizer.step()
 
 
                 # Convert genders: (batch_size, 1) -> (batch_size,)
