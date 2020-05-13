@@ -121,12 +121,36 @@ def main():
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
-                classification_loss = criterion(outputs, targets)
                 if baseline:
+                    classification_loss = criterion(outputs, targets)
                     loss = classification_loss
                 else:
                     adversarial_loss = adversarial_criterion(a, genders)
+
+                    # Backward pass (Adversarial)
+                    adversarial_loss.backward()
+                    adversarial_optimizer.step()
+
+                    # Zero out buffers
+                    primary_optimizer.zero_grad()
+                    adversarial_optimizer.zero_grad()
+
+                    # Forward pass (again)
+                    # Get some weird error if don't do forward again
+                    outputs, a = model(images)
+                    targets = targets.type_as(outputs)
+                    genders = genders.type_as(outputs)
+
+                    # CrossEntropyLoss is expecting:
+                    # Input:  (N, C) where C = number of classes
+                    classification_loss = criterion(outputs, targets)
+                    adversarial_loss = adversarial_criterion(a, genders)
                     loss = classification_loss - lambd * adversarial_loss
+
+                # Backward pass (Primary)
+                loss.backward()
+                primary_optimizer.step()
+
 
                 # Convert genders: (batch_size, 1) -> (batch_size,)
                 genders = genders.view(-1).bool()
@@ -143,18 +167,6 @@ def main():
                 mean_equality_gap_0.update(train_equality_gap_0, images.size(0))
                 mean_equality_gap_1.update(train_equality_gap_1, images.size(0))
                 mean_parity_gap.update(train_parity_gap, images.size(0))
-
-                # Backward pass (Primary)
-                loss.backward()
-                primary_optimizer.step()
-
-                # Zero out buffers
-                primary_optimizer.zero_grad()
-                adversarial_optimizer.zero_grad()
-
-                # Backward pass (Adversarial)
-                adversarial_loss.backward()
-                adversarial_optimizer.step()
 
                 if baseline:
                     s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
