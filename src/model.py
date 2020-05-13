@@ -71,7 +71,7 @@ class AdversarialHead(nn.Module):
 
         out = self.model(x)
         out_detached = self.model(x.detach())
-        return out, out_detached
+        return (out, out_detached)
 
 class BaselineModel(nn.Module):
     def __init__ (self, hidden_size, num_classes=39):
@@ -104,6 +104,6 @@ class OurModel(nn.Module):
         h = self.encoder(images)
         y = self.classifier(h)
         a, a_detached = self.adv_head(h)
-        return y, a, a_detached
+        return y, (a, a_detached)
 
 

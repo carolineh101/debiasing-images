@@ -112,7 +112,7 @@ def main():
                 genders = Variable(genders.to(device))
 
                 # Forward pass
-                outputs, a, a_detached = model(images)
+                outputs, (a, a_detached) = model(images)
                 targets = targets.type_as(outputs)
                 genders = genders.type_as(outputs)
 
