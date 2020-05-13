@@ -60,6 +60,9 @@ def main():
                 outputs, _ = model(images)
                 targets = targets.type_as(outputs)
 
+                # Convert genders: (batch_size, 1) -> (batch_size,)
+                genders = genders.type_as(outputs).view(-1).bool()
+
                 # Calculate accuracy
                 eval_acc = calculateAccuracy(outputs, targets)
 

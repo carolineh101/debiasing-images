@@ -51,7 +51,7 @@ def main():
     # Loss criterion
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
     if not baseline:
-        adversarial_loss = nn.BCEWithLogitsLoss()
+        adversarial_criterion = nn.BCEWithLogitsLoss()
 
     # Create optimizer
     params = list(model.parameters())
@@ -111,7 +111,7 @@ def main():
                 # Forward pass
                 outputs, a = model(images)
                 targets = targets.type_as(outputs)
-                genders = genders.type_as(outputs).bool()
+                genders = genders.type_as(outputs)
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
@@ -119,8 +119,11 @@ def main():
                 if baseline:
                     loss = classification_loss
                 else:
-                    adversarial_loss = adversarial_loss(a, genders)
+                    adversarial_loss = adversarial_criterion(a, genders)
                     loss = classification_loss - lambd * adversarial_loss
+
+                # Convert genders: (batch_size, 1) -> (batch_size,)
+                genders = genders.view(-1).bool()
 
                 # Calculate accuracy
                 train_acc = calculateAccuracy(outputs, targets)
@@ -169,7 +172,9 @@ def main():
                     # Forward pass
                     outputs, _ = model(images)
                     targets = targets.type_as(outputs)
-                    genders = genders.type_as(outputs).bool()
+
+                    # Convert genders: (batch_size, 1) -> (batch_size,)
+                    genders = genders.type_as(outputs).view(-1).bool()
 
                     # Calculate accuracy
                     eval_acc = calculateAccuracy(outputs, targets)

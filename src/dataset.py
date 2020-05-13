@@ -65,6 +65,9 @@ class CelebADataset(Dataset):
         targets = torch.cat((targets[:gender_index], targets[gender_index+1:]))
         gender = targets[gender_index]
 
+        # [batch_size] -> [batch_size, 1]
+        gender = gender.unsqueeze(-1)
+
         return image, targets, gender
 
 
