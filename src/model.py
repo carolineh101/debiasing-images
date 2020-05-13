@@ -64,7 +64,7 @@ class AdversarialHead(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=512, out_features=512),
             nn.ReLU(),
-            nn.Linear(in_features=512, out_features=512),
+            nn.Linear(in_features=512, out_features=1),
         )
 
     def forward (self, x):
