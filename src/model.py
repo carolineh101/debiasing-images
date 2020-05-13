@@ -65,8 +65,6 @@ class AdversarialHead(nn.Module):
             nn.Linear(in_features=512, out_features=512),
             nn.ReLU(),
             nn.Linear(in_features=512, out_features=512),
-            nn.ReLU(),
-            torch.nn.Softmax(dim=1)
         )
 
     def forward (self, x):
@@ -85,7 +83,7 @@ class BaselineModel(nn.Module):
 
         h = self.encoder(images)
         y = self.classifer(h)
-        return y
+        return y, None
 
 class OurModel(nn.Module):
     def __init__ (self, hidden_size, num_classes=39):
@@ -100,7 +98,7 @@ class OurModel(nn.Module):
         h_images = self.encoder(images)
         y = self.classifer(h_images)
         h_images_subset = self.encoder(images_subset)
-        z = self.adv_head(h_images_subset)
-        return y, z
+        a = self.adv_head(h_images_subset)
+        return y, a
 
 

@@ -18,7 +18,9 @@ def main():
     # pdb.set_trace()
     
     # Model Hyperparams
+    baseline = opt.baseline
     hidden_size = opt.hidden_size
+    lambd = opt.lambd
     learning_rate = opt.learning_rate
     save_after_x_epochs = 10
 
@@ -26,19 +28,32 @@ def main():
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-
     data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
+    # Load checkpoint
+    checkpoint = None
+    if opt.weights != '':
+        checkpoint = torch.load(opt.weights, map_location=device)
+        baseline = checkpoint['baseline']
+        hidden_size = checkpoint['hyp']['hidden_size']
+
     # Create model
-    model = BaselineModel(hidden_size)
+    if baseline:
+        model = BaselineModel(hidden_size)
+    else:
+        model = OurModel(hidden_size)
 
     # Convert device
     model = model.to(device)
 
-    # Create optimizer
+    # Loss criterion
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
+    if not baseline:
+        adversarial_loss = nn.BCEWithLogitsLoss()
+
+    # Create optimizer
     params = list(model.parameters())
     optimizer = torch.optim.Adam(params, lr = learning_rate)
 
@@ -49,16 +64,18 @@ def main():
     train_batch_count = len(train_data_loader)
     dev_batch_count = len(dev_data_loader)
 
-    #Load if resume
-    checkpoint = None
-    if opt.weights != '':
-        checkpoint = torch.load(opt.weights, map_location=device)
-        model.load_state_dict(checkpoint['model'])    
+    if checkpoint is not None:
+        # Load model weights
+        model.load_state_dict(checkpoint['model']) 
+
+        # Load metadata to resume training   
         if opt.resume:
             if checkpoint['epoch']:
                 start_epoch = checkpoint['epoch'] + 1
             if checkpoint['best_acc']:
                 best_acc = checkpoint['best_acc']
+            if checkpoint['lambd']:
+                best_acc = checkpoint['lambd']
             if checkpoint['optimizer']:
                 optimizer.load_state_dict(checkpoint['optimizer']) 
 
@@ -92,13 +109,18 @@ def main():
                 optimizer.zero_grad()
 
                 # Forward pass
-                outputs = model(images)
+                outputs, a = model(images)
                 targets = targets.type_as(outputs)
                 genders = genders.type_as(outputs).bool()
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
-                loss = criterion(outputs, targets)
+                classification_loss = criterion(outputs, targets)
+                if baseline:
+                    loss = classification_loss
+                else:
+                    adversarial_loss = adversarial_loss(a, genders)
+                    loss = classification_loss - lambd * adversarial_loss
 
                 # Calculate accuracy
                 train_acc = calculateAccuracy(outputs, targets)
@@ -117,7 +139,10 @@ def main():
                 loss.backward()
                 optimizer.step()
 
-                s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                if baseline:
+                    s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                else:
+                    s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                 pbar.set_description(s_train)
 
         # end batch ------------------------------------------------------------------------------------------------
@@ -142,7 +167,7 @@ def main():
 
                 with torch.no_grad():
                     # Forward pass
-                    outputs = model(images)
+                    outputs, _ = model(images)
                     targets = targets.type_as(outputs)
                     genders = genders.type_as(outputs).bool()
 
@@ -185,8 +210,10 @@ def main():
             'model': model.state_dict(),
             'optimizer': optimizer.state_dict(),
             'best_acc': best_acc,
+            'baseline': baseline,
             'hyp': {
                 'hidden_size': hidden_size,
+                'lambd': lambd
             }
         }
 
@@ -219,6 +246,8 @@ if __name__ == '__main__':
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')
+    parser.add_argument('--lambd', type=float, required=False, default=0.1, help='adversarial weight hyperparameter, lambda')
+    parser.add_argument('--baseline', action='store_true', help='train baseline model (without adversarial head')
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')

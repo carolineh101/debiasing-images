@@ -23,9 +23,14 @@ def main():
 
     # Load checkpoint
     checkpoint = torch.load(opt.weights, map_location=device)
+    baseline = checkpoint['baseline']
+    hidden_size = checkpoint['hyp']['hidden_size']
 
     # Create model
-    model = BaselineModel(checkpoint['hyp']['hidden_size'])
+    if baseline:
+        model = BaselineModel(hidden_size)
+    else:
+        model = OurModel(hidden_size)
 
     # Convert device
     model = model.to(device)
@@ -52,7 +57,7 @@ def main():
 
             with torch.no_grad():
                 # Forward pass
-                outputs = model(images)
+                outputs, _ = model(images)
                 targets = targets.type_as(outputs)
 
                 # Calculate accuracy
