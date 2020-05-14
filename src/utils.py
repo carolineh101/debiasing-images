@@ -123,9 +123,9 @@ class AverageMeter(object):
 
     def reset(self):
 
-        self.val = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
-        self.avg = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
-        self.sum = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
+        self.val = torch.zeros(self.shape, dtype=torch.float, device=self.device) if self.shape else 0
+        self.avg = torch.zeros(self.shape, dtype=torch.float, device=self.device) if self.shape else 0
+        self.sum = torch.zeros(self.shape, dtype=torch.float, device=self.device) if self.shape else 0
         self.count = 0
 
     def update(self, val, n=1):
