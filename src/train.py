@@ -18,7 +18,9 @@ def main():
     # pdb.set_trace()
     
     # Model Hyperparams
+    baseline = opt.baseline
     hidden_size = opt.hidden_size
+    lambd = opt.lambd
     learning_rate = opt.learning_rate
     save_after_x_epochs = 10
 
@@ -26,21 +28,37 @@ def main():
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-
     data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
+    # Load checkpoint
+    checkpoint = None
+    if opt.weights != '':
+        checkpoint = torch.load(opt.weights, map_location=device)
+        baseline = checkpoint['baseline']
+        hidden_size = checkpoint['hyp']['hidden_size']
+
     # Create model
-    model = BaselineModel(hidden_size)
+    if baseline:
+        model = BaselineModel(hidden_size)
+    else:
+        model = OurModel(hidden_size)
 
     # Convert device
     model = model.to(device)
 
-    # Create optimizer
+    # Loss criterion
     criterion = nn.BCEWithLogitsLoss()  # For multi-label classification
-    params = list(model.parameters())
-    optimizer = torch.optim.Adam(params, lr = learning_rate)
+    if not baseline:
+        adversarial_criterion = nn.BCEWithLogitsLoss()
+
+    # Create optimizers
+    primary_optimizer_params = list(model.encoder.parameters()) + list(model.classifier.parameters())
+    primary_optimizer = torch.optim.Adam(primary_optimizer_params, lr = learning_rate)
+    if not baseline:
+        adversarial_optimizer_params = list(model.adv_head.parameters())
+        adversarial_optimizer = torch.optim.Adam(adversarial_optimizer_params, lr = learning_rate)
 
     start_epoch = 0
     best_acc = 0.0
@@ -49,18 +67,24 @@ def main():
     train_batch_count = len(train_data_loader)
     dev_batch_count = len(dev_data_loader)
 
-    #Load if resume
-    checkpoint = None
-    if opt.weights != '':
-        checkpoint = torch.load(opt.weights, map_location=device)
-        model.load_state_dict(checkpoint['model'])    
+    if checkpoint is not None:
+        # Load model weights
+        model.load_state_dict(checkpoint['model']) 
+
+        # Load metadata to resume training   
         if opt.resume:
             if checkpoint['epoch']:
                 start_epoch = checkpoint['epoch'] + 1
             if checkpoint['best_acc']:
                 best_acc = checkpoint['best_acc']
-            if checkpoint['optimizer']:
-                optimizer.load_state_dict(checkpoint['optimizer']) 
+            if checkpoint['lambd']:
+                best_acc = checkpoint['lambd']
+            if checkpoint['optimizers']['primary']:
+                primary_optimizer.load_state_dict(checkpoint['optimizers']['primary'])
+            if checkpoint['optimizers']['adversarial']:
+                adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
+
+    # torch.autograd.set_detect_anomaly(True)
 
     # Train loop
     # pdb.set_trace()
@@ -70,10 +94,10 @@ def main():
         model.train()
 
         # Initialize meters
-        mean_accuracy = AverageMeter()
-        mean_equality_gap_0 = AverageMeter()
-        mean_equality_gap_1 = AverageMeter()
-        mean_parity_gap = AverageMeter()
+        mean_accuracy = AverageMeter(device=device)
+        mean_equality_gap_0 = AverageMeter(device=device)
+        mean_equality_gap_1 = AverageMeter(device=device)
+        mean_parity_gap = AverageMeter(device=device)
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
             for i, (images, targets, genders) in pbar:
@@ -87,25 +111,50 @@ def main():
                 # Shape: torch.Size([batch_size])
                 genders = Variable(genders.to(device))
 
+                # Forward pass
+                outputs, (a, a_detached) = model(images)
+                targets = targets.type_as(outputs)
+                genders = genders.type_as(outputs)
+
                 # Zero out buffers
                 # model.zero_grad() # either model or optimizer.zero_grad() is fine
-                optimizer.zero_grad()
-
-                # Forward pass
-                outputs = model(images)
-                targets = targets.type_as(outputs)
-                genders = genders.type_as(outputs).bool()
+                primary_optimizer.zero_grad()
 
                 # CrossEntropyLoss is expecting:
                 # Input:  (N, C) where C = number of classes
-                loss = criterion(outputs, targets)
+                classification_loss = criterion(outputs, targets)
+
+                if baseline:
+                    loss = classification_loss
+                else:
+                    adversarial_loss = adversarial_criterion(a, genders)
+                    loss = classification_loss - lambd * adversarial_loss
+
+                    # Backward pass (Primary)
+                    loss.backward()
+                    primary_optimizer.step()
+
+                    # Zero out buffers
+                    adversarial_optimizer.zero_grad()
+
+                    # Calculate loss for adversarial head
+                    adversarial_loss = adversarial_criterion(a_detached, genders)
+
+                    # Backward pass (Adversarial)
+                    adversarial_loss.backward()
+                    adversarial_optimizer.step()
+
+
+                # Convert genders: (batch_size, 1) -> (batch_size,)
+                genders = genders.view(-1).bool()
 
                 # Calculate accuracy
-                train_acc = calculateAccuracy(outputs, targets)
+                train_acc, train_attr_acc = calculateAccuracy(outputs, targets)
 
                 # Calculate fairness metrics
-                train_equality_gap_0, train_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
-                train_parity_gap = calculateParityGap(outputs, targets, genders)
+                train_equality_gap_0, train_equality_gap_1, train_attr_equality_gap_0, train_attr_equality_gap_1 = \
+                    calculateEqualityGap(outputs, targets, genders)
+                train_parity_gap, train_attr_parity_gap = calculateParityGap(outputs, targets, genders)
 
                 # Update averages
                 mean_accuracy.update(train_acc, images.size(0))
@@ -113,11 +162,10 @@ def main():
                 mean_equality_gap_1.update(train_equality_gap_1, images.size(0))
                 mean_parity_gap.update(train_parity_gap, images.size(0))
 
-                # Backward pass
-                loss.backward()
-                optimizer.step()
-
-                s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                if baseline:
+                    s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                else:
+                    s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                 pbar.set_description(s_train)
 
         # end batch ------------------------------------------------------------------------------------------------
@@ -128,9 +176,13 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
+        attr_accuracy = AverageMeter((1, 39))
         mean_equality_gap_0 = AverageMeter()
+        attr_equality_gap_0 = AverageMeter((1, 39))
         mean_equality_gap_1 = AverageMeter()
+        attr_equality_gap_1 = AverageMeter((1, 39))
         mean_parity_gap = AverageMeter()
+        attr_parity_gap = AverageMeter((1, 39))
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
             for i, (images, targets, genders) in pbar:
@@ -142,22 +194,29 @@ def main():
 
                 with torch.no_grad():
                     # Forward pass
-                    outputs = model(images)
+                    outputs = model.sample(images)
                     targets = targets.type_as(outputs)
-                    genders = genders.type_as(outputs).bool()
+
+                    # Convert genders: (batch_size, 1) -> (batch_size,)
+                    genders = genders.type_as(outputs).view(-1).bool()
 
                     # Calculate accuracy
-                    eval_acc = calculateAccuracy(outputs, targets)
+                    eval_acc, eval_attr_acc = calculateAccuracy(outputs, targets)
 
                     # Calculate fairness metrics
-                    eval_equality_gap_0, eval_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
-                    eval_parity_gap = calculateParityGap(outputs, targets, genders)
+                    eval_equality_gap_0, eval_equality_gap_1, eval_attr_equality_gap_0, eval_attr_equality_gap_1 = \
+                        calculateEqualityGap(outputs, targets, genders)
+                    eval_parity_gap, eval_attr_parity_gap = calculateParityGap(outputs, targets, genders)
 
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
                     mean_equality_gap_0.update(eval_equality_gap_0, images.size(0))
                     mean_equality_gap_1.update(eval_equality_gap_1, images.size(0))
                     mean_parity_gap.update(eval_parity_gap, images.size(0))
+                    attr_accuracy.update(eval_attr_acc, images.size(0))
+                    attr_equality_gap_0.update(eval_attr_equality_gap_0, images.size(0))
+                    attr_equality_gap_1.update(eval_attr_equality_gap_1, images.size(0))
+                    attr_parity_gap.update(eval_attr_parity_gap, images.size(0))
 
                     s_eval = ('%10s Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                     pbar.set_description(s_eval)
@@ -172,6 +231,8 @@ def main():
         with open(opt.log, 'a+') as f:
             f.write('{}\n'.format(s_train))
             f.write('{}\n'.format(s_eval))
+        save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0.avg, attr_equality_gap_1.avg, attr_parity_gap.avg,
+                          opt.attr_metrics + '_' + str(epoch))
 
         # Check against best accuracy
         mean_eval_acc = mean_accuracy.avg.cpu().item()
@@ -183,10 +244,15 @@ def main():
         checkpoint = {
             'epoch': epoch,
             'model': model.state_dict(),
-            'optimizer': optimizer.state_dict(),
+            'optimizers': {
+                'primary': primary_optimizer.state_dict(),
+                'adversarial': adversarial_optimizer.state_dict() if not baseline else None,
+            },
             'best_acc': best_acc,
+            'baseline': baseline,
             'hyp': {
                 'hidden_size': hidden_size,
+                'lambd': lambd
             }
         }
 
@@ -215,12 +281,15 @@ if __name__ == '__main__':
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
-    parser.add_argument('--num-epochs', type=int, required=False, default=100, help='number of epochs')
-    parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.001, help='learning rate')
+    parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
+    parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')
+    parser.add_argument('--lambd', type=float, required=False, default=0.1, help='adversarial weight hyperparameter, lambda')
+    parser.add_argument('--baseline', action='store_true', help='train baseline model (without adversarial head')
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
+    parser.add_argument('--attr-metrics', type=str, required=False, default='train_attr', help='filename (to be prepended to \'_{epoch}.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
     opt = parser.parse_args()
     main()

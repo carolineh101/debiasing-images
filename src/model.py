@@ -64,27 +64,37 @@ class AdversarialHead(nn.Module):
             nn.ReLU(),
             nn.Linear(in_features=512, out_features=512),
             nn.ReLU(),
-            nn.Linear(in_features=512, out_features=512),
-            nn.ReLU(),
-            torch.nn.Softmax(dim=1)
+            nn.Linear(in_features=512, out_features=1),
         )
 
     def forward (self, x):
 
         out = self.model(x)
-        return out
+        out_detached = self.model(x.detach())
+        return (out, out_detached)
 
 class BaselineModel(nn.Module):
     def __init__ (self, hidden_size, num_classes=39):
         super(BaselineModel, self).__init__()
 
         self.encoder = Encoder(hidden_size)
-        self.classifer = Classifier(hidden_size, num_classes)
+        self.classifier = Classifier(hidden_size, num_classes)
 
     def forward (self, images):
 
         h = self.encoder(images)
-        y = self.classifer(h)
+        y = self.classifier(h)
+        return y, None
+
+    def sample (self, images):
+        """
+        Method to perform classification without computing
+        adversarial head output.
+          images: tensor of shape (batch_size, num_channels, height, width)
+          return: tensor of shape (batch_size, num_classes)
+        """
+        h = self.encoder(images)
+        y = self.classifier(h)
         return y
 
 class OurModel(nn.Module):
@@ -92,15 +102,30 @@ class OurModel(nn.Module):
         super(OurModel, self).__init__()
 
         self.encoder = Encoder(hidden_size)
-        self.classifer = Classifier(hidden_size, num_classes)
+        self.classifier = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
 
-    def forward (self, images, images_subset):
+    # def forward (self, images, images_subset):
+    def forward (self, images):
 
-        h_images = self.encoder(images)
-        y = self.classifer(h_images)
-        h_images_subset = self.encoder(images_subset)
-        z = self.adv_head(h_images_subset)
-        return y, z
+        # h_images = self.encoder(images)
+        # y = self.classifer(h_images)
+        # h_images_subset = self.encoder(images_subset)
+        # a = self.adv_head(h_images_subset)
+        h = self.encoder(images)
+        y = self.classifier(h)
+        a, a_detached = self.adv_head(h)
+        return y, (a, a_detached)
+
+    def sample (self, images):
+        """
+        Method to perform classification without computing
+        adversarial head output.
+          images: tensor of shape (batch_size, num_channels, height, width)
+          return: tensor of shape (batch_size, num_classes)
+        """
+        h = self.encoder(images)
+        y = self.classifier(h)
+        return y
 
 

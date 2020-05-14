@@ -1,0 +1,20 @@
+       0/9 Loss: 0.2145, Accuracy: 0.8895, Equality Gap 0: 0.0824, Equality Gap 1: 0.2387, Parity Gap: 0.1068
+       0/9 Accuracy: 0.9139, Equality Gap 0: 0.0904, Equality Gap 1: 0.3155, Parity Gap: 0.1288
+       1/9 Loss: 0.1997, Accuracy: 0.9151, Equality Gap 0: 0.0885, Equality Gap 1: 0.3424, Parity Gap: 0.1304
+       1/9 Accuracy: 0.9179, Equality Gap 0: 0.0900, Equality Gap 1: 0.3382, Parity Gap: 0.1311
+       2/9 Loss: 0.1881, Accuracy: 0.9225, Equality Gap 0: 0.0869, Equality Gap 1: 0.3581, Parity Gap: 0.1339
+       2/9 Accuracy: 0.9170, Equality Gap 0: 0.0897, Equality Gap 1: 0.3483, Parity Gap: 0.1342
+       3/9 Loss: 0.1980, Accuracy: 0.9303, Equality Gap 0: 0.0839, Equality Gap 1: 0.3631, Parity Gap: 0.1367
+       3/9 Accuracy: 0.9169, Equality Gap 0: 0.0955, Equality Gap 1: 0.3572, Parity Gap: 0.1367
+       4/9 Loss: 0.1782, Accuracy: 0.9397, Equality Gap 0: 0.0794, Equality Gap 1: 0.3605, Parity Gap: 0.1385
+       4/9 Accuracy: 0.9127, Equality Gap 0: 0.0959, Equality Gap 1: 0.3619, Parity Gap: 0.1393
+       5/9 Loss: 0.1247, Accuracy: 0.9496, Equality Gap 0: 0.0738, Equality Gap 1: 0.3536, Parity Gap: 0.1399
+       5/9 Accuracy: 0.9124, Equality Gap 0: 0.0987, Equality Gap 1: 0.3680, Parity Gap: 0.1398
+       6/9 Loss: 0.0852, Accuracy: 0.9588, Equality Gap 0: 0.0680, Equality Gap 1: 0.3420, Parity Gap: 0.1407
+       6/9 Accuracy: 0.9093, Equality Gap 0: 0.1023, Equality Gap 1: 0.3662, Parity Gap: 0.1389
+       7/9 Loss: 0.1060, Accuracy: 0.9667, Equality Gap 0: 0.0624, Equality Gap 1: 0.3293, Parity Gap: 0.1416
+       7/9 Accuracy: 0.9086, Equality Gap 0: 0.0982, Equality Gap 1: 0.3596, Parity Gap: 0.1357
+       8/9 Loss: 0.0858, Accuracy: 0.9731, Equality Gap 0: 0.0577, Equality Gap 1: 0.3183, Parity Gap: 0.1424
+       8/9 Accuracy: 0.9067, Equality Gap 0: 0.1022, Equality Gap 1: 0.3685, Parity Gap: 0.1374
+       9/9 Loss: 0.0644, Accuracy: 0.9780, Equality Gap 0: 0.0536, Equality Gap 1: 0.3063, Parity Gap: 0.1419
+       9/9 Accuracy: 0.9063, Equality Gap 0: 0.1032, Equality Gap 1: 0.3628, Parity Gap: 0.1392

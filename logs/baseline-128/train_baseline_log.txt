@@ -2,7 +2,7 @@
 0/9 Accuracy: 0.9118
 1/9 Loss: 0.2517, Accuracy: 0.9124
 1/9 Accuracy: 0.9168
-2/9 Loss: 0.3882, Accuracy
+2/9 Loss: 0.3882, Accuracy: 0.9202
 2/9 Accuracy: 0.9177
 3/9 Loss: 0.3020, Accuracy: 0.9276
 3/9 Accuracy: 0.9165
