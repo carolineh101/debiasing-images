@@ -115,17 +115,17 @@ class AverageMeter(object):
         self.reset()
 
     def reset(self):
-        self.val = 0
-        if self.shape: self.val = torch.zeros(self.shape, dtype=torch.float)
-        self.avg = 0
-        if self.shape: self.avg = torch.zeros(self.shape, dtype=torch.float)
-        self.sum = 0
-        if self.shape: self.sum = torch.zeros(self.shape, dtype=torch.float)
+
+        self.val = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
+        self.avg = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
+        self.sum = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
         self.count = 0
 
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
-        if self.shape: self.avg = torch.true_divide(self.sum, self.count)
-        else: self.avg = self.sum / self.count
+        if self.shape:
+            self.avg = torch.true_divide(self.sum, self.count)
+        else:
+            self.avg = self.sum / self.count

@@ -1,4 +1,5 @@
 numpy
+pandas
 tqdm
 torch
 torchvision
