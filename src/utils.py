@@ -119,6 +119,7 @@ class AverageMeter(object):
     def __init__(self, shape=None, device='cpu'):
         self.shape = shape
         self.device = device
+        self.reset()
 
     def reset(self):
 
