@@ -61,7 +61,7 @@ def main():
 
             with torch.no_grad():
                 # Forward pass
-                outputs, _ = model(images)
+                outputs = model.sample(images)
                 targets = targets.type_as(outputs)
 
                 # Convert genders: (batch_size, 1) -> (batch_size,)

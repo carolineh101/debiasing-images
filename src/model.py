@@ -86,6 +86,17 @@ class BaselineModel(nn.Module):
         y = self.classifier(h)
         return y, None
 
+    def sample (self, images):
+        """
+        Method to perform classification without computing
+        adversarial head output.
+          images: tensor of shape (batch_size, num_channels, height, width)
+          return: tensor of shape (batch_size, num_classes)
+        """
+        h = self.encoder(images)
+        y = self.classifier(h)
+        return y
+
 class OurModel(nn.Module):
     def __init__ (self, hidden_size, num_classes=39):
         super(OurModel, self).__init__()
@@ -105,5 +116,16 @@ class OurModel(nn.Module):
         y = self.classifier(h)
         a, a_detached = self.adv_head(h)
         return y, (a, a_detached)
+
+    def sample (self, images):
+        """
+        Method to perform classification without computing
+        adversarial head output.
+          images: tensor of shape (batch_size, num_channels, height, width)
+          return: tensor of shape (batch_size, num_classes)
+        """
+        h = self.encoder(images)
+        y = self.classifier(h)
+        return y
 
 
