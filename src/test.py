@@ -44,10 +44,10 @@ def main():
     model.eval()
 
     # Initialize meters
-    mean_accuracy = AverageMeter(device=device)
-    mean_equality_gap_0 = AverageMeter(device=device)
-    mean_equality_gap_1 = AverageMeter(device=device)
-    mean_parity_gap = AverageMeter(device=device)
+    mean_accuracy = AverageMeter()
+    mean_equality_gap_0 = AverageMeter()
+    mean_equality_gap_1 = AverageMeter()
+    mean_parity_gap = AverageMeter()
     attr_accuracy = AverageMeter((1, 39), device=device)
     attr_equality_gap_0 = AverageMeter((1, 39), device=device)
     attr_equality_gap_1 = AverageMeter((1, 39), device=device)
