@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torchvision import models
+import pdb
 
 
 class Encoder(nn.Module):
@@ -106,15 +107,16 @@ class OurModel(nn.Module):
         self.adv_head = AdversarialHead(hidden_size)
 
     # def forward (self, images, images_subset):
-    def forward (self, images):
+    def forward (self, images, protected_class_labels):
 
         # h_images = self.encoder(images)
         # y = self.classifer(h_images)
         # h_images_subset = self.encoder(images_subset)
         # a = self.adv_head(h_images_subset)
-        h = self.encoder(images)
-        y = self.classifier(h)
-        a, a_detached = self.adv_head(h)
+        h = self.encoder(images) # (batch_size, hidden_size)
+        y = self.classifier(h) # (batch_size, num_classes)
+        protected_class_encoded_images = h[protected_class_labels] 
+        a, a_detached = self.adv_head(protected_class_encoded_images)
         return y, (a, a_detached)
 
     def sample (self, images):

@@ -54,7 +54,7 @@ def main():
     attr_parity_gap = AverageMeter((1, 39), device=device)
 
     with tqdm(enumerate(test_data_loader), total=test_batch_count) as pbar:
-        for i, (images, targets, genders) in pbar:
+        for i, (images, targets, genders, protected_labels) in pbar:
             images = Variable(images.to(device))
             targets = Variable(targets.to(device))
             genders = Variable(genders.to(device))

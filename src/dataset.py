@@ -4,6 +4,7 @@ from torchvision import datasets, transforms
 import torch
 import numpy as np
 import pdb
+import random
 
 
 # Transform to modify images for pre-trained ResNet base
@@ -20,7 +21,7 @@ def transform_image(image, image_size=224, mean=[0.485, 0.456, 0.406], std=[0.22
     return transform(image)
 
 
-def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subset_percentage=1,
+def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subset_percentage=1, protected_percentage=1,
                 batch_size=32, num_workers=1):
     """
     Return DataLoaders for CelebA, downloading dataset if necessary.
@@ -30,7 +31,7 @@ def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subs
     """
     data_loaders = {} # right now, it seems our three splits will return three dataloaders of the same size? 
     for split in splits:
-        dataset = CelebADataset(split=split, subset_percentage=subset_percentage)
+        dataset = CelebADataset(split=split, subset_percentage=subset_percentage, protected_percentage=protected_percentage)
         data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         data_loaders[split] = data_loader
     return data_loaders
@@ -38,7 +39,7 @@ def load_celeba(dir_name='data/CelebA/', splits=['train', 'valid', 'test'], subs
 
 class CelebADataset(Dataset):
 
-    def __init__(self, split, dir_name='data/', subset_percentage = 1):
+    def __init__(self, split, dir_name='data/', subset_percentage = 1, protected_percentage = 1):
         self.transform_image = transform_image
         # self.target_transform = target_transform
         self.dataset = datasets.CelebA(
@@ -51,6 +52,11 @@ class CelebADataset(Dataset):
 
         if subset_percentage < 1:
             self.dataset = Subset(self.dataset, range(ceil(subset_percentage * len(self.dataset))))
+        
+        num_protected = ceil(protected_percentage * len(self.dataset))
+        self.protected_split = random.sample(range(len(self.dataset)), num_protected)
+        self.protected = np.zeros(len(self.dataset))
+        self.protected[self.protected_split] = 1    
 
 
     def __len__(self):
@@ -67,5 +73,6 @@ class CelebADataset(Dataset):
 
         # [batch_size] -> [batch_size, 1]
         gender = gender.unsqueeze(-1)
+        protected = self.protected[idx]
 
-        return image, targets, gender
+        return image, targets, gender, protected

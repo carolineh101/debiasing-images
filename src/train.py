@@ -7,6 +7,7 @@ import torchvision
 from torch.autograd import Variable
 import torch.nn as nn
 import torch.optim as optim
+import random
 
 from tqdm import tqdm
 
@@ -18,19 +19,25 @@ def main():
     # pdb.set_trace()
     
     # Model Hyperparams
+    random.seed(opt.random_seed)
     baseline = opt.baseline
     hidden_size = opt.hidden_size
     lambd = opt.lambd
     learning_rate = opt.learning_rate
     save_after_x_epochs = 10
+    num_classes = 39
 
     # Determine device
     device = getDevice(opt.gpu_id)
 
     # Create data loaders
-    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
+    data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage, \
+         protected_percentage = opt.protected_percentage)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
+
+    #Divide training dataset into those with protected class labels and those without protected class labels
+
 
     # Load checkpoint
     checkpoint = None
@@ -78,7 +85,7 @@ def main():
             if checkpoint['best_acc']:
                 best_acc = checkpoint['best_acc']
             if checkpoint['lambd']:
-                best_acc = checkpoint['lambd']
+                lambd = checkpoint['lambd']
             if checkpoint['optimizers']['primary']:
                 primary_optimizer.load_state_dict(checkpoint['optimizers']['primary'])
             if checkpoint['optimizers']['adversarial']:
@@ -100,7 +107,7 @@ def main():
         mean_parity_gap = AverageMeter(device=device)
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
-            for i, (images, targets, genders) in pbar:
+            for i, (images, targets, genders, protected_labels) in pbar:
 
                 # Shape: torch.Size([batch_size, 3, crop_size, crop_size])
                 images = Variable(images.to(device))
@@ -111,8 +118,14 @@ def main():
                 # Shape: torch.Size([batch_size])
                 genders = Variable(genders.to(device))
 
+                # Shape: torch.Size([batch_size])
+                protected_labels = Variable(protected_labels.type(torch.BoolTensor).to(device))
+
                 # Forward pass
-                outputs, (a, a_detached) = model(images)
+                if baseline:
+                    outputs, (a, a_detached) = model(images)
+                else:
+                    outputs, (a, a_detached) = model(images, protected_labels)
                 targets = targets.type_as(outputs)
                 genders = genders.type_as(outputs)
 
@@ -127,7 +140,7 @@ def main():
                 if baseline:
                     loss = classification_loss
                 else:
-                    adversarial_loss = adversarial_criterion(a, genders)
+                    adversarial_loss = adversarial_criterion(a, genders[protected_labels])
                     loss = classification_loss - lambd * adversarial_loss
 
                     # Backward pass (Primary)
@@ -138,7 +151,7 @@ def main():
                     adversarial_optimizer.zero_grad()
 
                     # Calculate loss for adversarial head
-                    adversarial_loss = adversarial_criterion(a_detached, genders)
+                    adversarial_loss = adversarial_criterion(a_detached, genders[protected_labels])
 
                     # Backward pass (Adversarial)
                     adversarial_loss.backward()
@@ -176,21 +189,19 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
-        attr_accuracy = AverageMeter((1, 39))
+        attr_accuracy = AverageMeter((1, num_classes))
         mean_equality_gap_0 = AverageMeter()
-        attr_equality_gap_0 = AverageMeter((1, 39))
+        attr_equality_gap_0 = AverageMeter((1, num_classes))
         mean_equality_gap_1 = AverageMeter()
-        attr_equality_gap_1 = AverageMeter((1, 39))
+        attr_equality_gap_1 = AverageMeter((1, num_classes))
         mean_parity_gap = AverageMeter()
-        attr_parity_gap = AverageMeter((1, 39))
+        attr_parity_gap = AverageMeter((1, num_classes))
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
-            for i, (images, targets, genders) in pbar:
+            for i, (images, targets, genders, protected_labels) in pbar:
                 images = Variable(images.to(device))
                 targets = Variable(targets.to(device))
                 genders = Variable(genders.to(device))
-
-                # gt = torch.cat((gt, targets), 0)
 
                 with torch.no_grad():
                     # Forward pass
@@ -221,7 +232,6 @@ def main():
                     s_eval = ('%10s Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                     pbar.set_description(s_eval)
 
-                # pred = torch.cat((pred, output.data), 0)
 
         # Create output dir
         if not os.path.exists(opt.out_dir):
@@ -279,6 +289,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument('--dataset', type=str, required=True, help='dataset path. Must contain training_set and eval_set subdirectories.')
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
+    parser.add_argument('--protected-percentage', type=float, required=False, default=1.0, help='Fraction of dataset with protected class label')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
@@ -291,5 +302,6 @@ if __name__ == '__main__':
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
     parser.add_argument('--attr-metrics', type=str, required=False, default='train_attr', help='filename (to be prepended to \'_{epoch}.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
+    parser.add_argument('--random-seed', type=int, required=False, default=1, help='random seed')
     opt = parser.parse_args()
     main()
