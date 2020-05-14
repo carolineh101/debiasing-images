@@ -56,7 +56,7 @@ def calculateAccuracy(outputs, targets, threshold=0.5):
     accuracy = torch.true_divide((preds == targets).sum(0) * 1.0, targets.size(0))
     
     # Overall average accuracy
-    # Float
+    # Float tensor
     average_accuracy = accuracy.sum() / targets.size(1)
     return average_accuracy, accuracy
 
@@ -116,15 +116,16 @@ def save_attr_metrics(accuracy, equality_gap_0, equality_gap_1, parity_gap, file
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
-    def __init__(self, shape=None):
+    def __init__(self, shape=None, device='cpu'):
         self.shape = shape
         self.reset()
+        self.device = device
 
     def reset(self):
 
-        self.val = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
-        self.avg = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
-        self.sum = torch.zeros(self.shape, dtype=torch.float) if self.shape else 0
+        self.val = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
+        self.avg = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
+        self.sum = torch.zeros(self.shape, dtype=torch.float, device=self.sevice) if self.shape else 0
         self.count = 0
 
     def update(self, val, n=1):
