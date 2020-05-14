@@ -44,14 +44,20 @@ def getDevice(gpu_id=None):
 def calculateAccuracy(outputs, targets, threshold=0.5):
     """
         Calculates the average accuracy.
-          outputs: Tensor
-          targets: Tensor
+          outputs: Tensor of shape (batch_size, num_attributes)
+          targets: Tensor of shape (batch_size, num_attributes)
           threshold: float
     """
 
     preds = torch.sigmoid(outputs) > threshold
+
+    # Per-attribute average accuracy
+    # Tensor of shape (num_attributes)
     accuracy = torch.true_divide((preds == targets).sum(0) * 1.0, targets.size(0))
-    average_accuracy = per_attribute_accuracy.sum() / targets.size(1)
+    
+    # Overall average accuracy
+    # Float
+    average_accuracy = accuracy.sum() / targets.size(1)
     return average_accuracy, accuracy
 
 def calculateConfusionMatrix(preds, targets):
