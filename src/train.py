@@ -94,10 +94,10 @@ def main():
         model.train()
 
         # Initialize meters
-        mean_accuracy = AverageMeter()
-        mean_equality_gap_0 = AverageMeter()
-        mean_equality_gap_1 = AverageMeter()
-        mean_parity_gap = AverageMeter()
+        mean_accuracy = AverageMeter(device=device)
+        mean_equality_gap_0 = AverageMeter(device=device)
+        mean_equality_gap_1 = AverageMeter(device=device)
+        mean_parity_gap = AverageMeter(device=device)
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
             for i, (images, targets, genders) in pbar:
