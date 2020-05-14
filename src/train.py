@@ -189,13 +189,13 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
-        attr_accuracy = AverageMeter((1, num_classes))
         mean_equality_gap_0 = AverageMeter()
-        attr_equality_gap_0 = AverageMeter((1, num_classes))
         mean_equality_gap_1 = AverageMeter()
-        attr_equality_gap_1 = AverageMeter((1, num_classes))
         mean_parity_gap = AverageMeter()
-        attr_parity_gap = AverageMeter((1, num_classes))
+        attr_accuracy = AverageMeter((1, num_classes), device=device)
+        attr_equality_gap_0 = AverageMeter((1, num_classes), device=device)
+        attr_equality_gap_1 = AverageMeter((1, num_classes), device=device)
+        attr_parity_gap = AverageMeter((1, num_classes), device=device)
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
             for i, (images, targets, genders, protected_labels) in pbar:
