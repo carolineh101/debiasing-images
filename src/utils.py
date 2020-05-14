@@ -108,8 +108,8 @@ def calculateParityGap(outputs, targets, genders, threshold=0.5):
     return average_parity_gap, parity_gap
 
 def save_attr_metrics(accuracy, equality_gap_0, equality_gap_1, parity_gap, filename):
-    df = pd.DataFrame(data=[accuracy.view(-1).numpy(), equality_gap_0.view(-1).numpy(),
-                            equality_gap_1.view(-1).numpy(), parity_gap.view(-1).numpy()],
+    df = pd.DataFrame(data=[accuracy.view(-1).cpu().numpy(), equality_gap_0.view(-1).cpu().numpy(),
+                            equality_gap_1.view(-1).cpu().numpy(), parity_gap.view(-1).cpu().numpy()],
                       index=['accuracy', 'equality_gap_0', 'equality_gap_1', 'parity_gap'], columns=TARGET_ATTRIBUTES)
     df.to_csv(filename + '.csv')
 
