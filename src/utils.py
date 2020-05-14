@@ -1,5 +1,17 @@
 import torch
 import pdb
+import pandas as pd
+
+
+TARGET_ATTRIBUTES = [
+    "5_o_Clock_Shadow", "Arched_Eyebrows", "Attractive", "Bags_Under_Eyes", "Bald", "Bangs", "Big_Lips", "Big_Nose",
+    "Black_Hair", "Blond_Hair", "Blurry", "Brown_Hair", "Bushy_Eyebrows", "Chubby", "Double_Chin", "Eyeglasses",
+    "Goatee", "Gray_Hair", "Heavy_Makeup", "High_Cheekbones", "Mouth_Slightly_Open", "Mustache", "Narrow_Eyes",
+    "No_Beard", "Oval_Face", "Pale_Skin", "Pointy_Nose", "Receding_Hairline", "Rosy_Cheeks", "Sideburns", "Smiling",
+    "Straight_Hair", "Wavy_Hair", "Wearing_Earrings", "Wearing_Hat", "Wearing_Lipstick", "Wearing_Necklace",
+    "Wearing_Necktie", "Young"
+]
+
 
 def getDevice(gpu_id=None):
 
@@ -38,10 +50,9 @@ def calculateAccuracy(outputs, targets, threshold=0.5):
     """
 
     preds = torch.sigmoid(outputs) > threshold
-
-    average_accuracy = (preds == targets).sum() * 1.0 / (targets.size(0) * targets.size(1))
-
-    return average_accuracy
+    accuracy = torch.true_divide((preds == targets).sum(0) * 1.0, targets.size(0))
+    average_accuracy = per_attribute_accuracy.sum() / targets.size(1)
+    return average_accuracy, accuracy
 
 def calculateConfusionMatrix(preds, targets):
     """
@@ -76,7 +87,7 @@ def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
     equality_gap_0 = (prob_correct_0_m - prob_correct_0_f).abs()
     average_equality_gap_1 = equality_gap_1.sum() * 1.0 / targets.size(1)
     average_equality_gap_0 = equality_gap_0.sum() * 1.0 / targets.size(1)
-    return average_equality_gap_0, average_equality_gap_1
+    return average_equality_gap_0, average_equality_gap_1, equality_gap_0, equality_gap_1
 
 def calculateProbTrue(preds, targets):
     t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
@@ -88,22 +99,33 @@ def calculateParityGap(outputs, targets, genders, threshold=0.5):
     prob_true_f = calculateProbTrue(preds[genders == 0], targets[genders == 0])
     parity_gap = (prob_true_m - prob_true_f).abs()
     average_parity_gap = parity_gap.sum() * 1.0 / targets.size(1)
-    return average_parity_gap
+    return average_parity_gap, parity_gap
+
+def save_attr_metrics(accuracy, equality_gap_0, equality_gap_1, parity_gap, filename):
+    df = pd.DataFrame(data=[accuracy.view(-1).numpy(), equality_gap_0.view(-1).numpy(),
+                            equality_gap_1.view(-1).numpy(), parity_gap.view(-1).numpy()],
+                      index=['accuracy', 'equality_gap_0', 'equality_gap_1', 'parity_gap'], columns=TARGET_ATTRIBUTES)
+    df.to_csv(filename + '.csv')
 
 class AverageMeter(object):
     """Computes and stores the average and current value"""
 
-    def __init__(self):
+    def __init__(self, shape=None):
+        self.shape = shape
         self.reset()
 
     def reset(self):
         self.val = 0
+        if self.shape: self.val = torch.zeros(self.shape, dtype=torch.float)
         self.avg = 0
+        if self.shape: self.avg = torch.zeros(self.shape, dtype=torch.float)
         self.sum = 0
+        if self.shape: self.sum = torch.zeros(self.shape, dtype=torch.float)
         self.count = 0
 
     def update(self, val, n=1):
         self.val = val
         self.sum += val * n
         self.count += n
-        self.avg = self.sum / self.count
+        if self.shape: self.avg = torch.true_divide(self.sum, self.count)
+        else: self.avg = self.sum / self.count

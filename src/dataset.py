@@ -69,6 +69,3 @@ class CelebADataset(Dataset):
         gender = gender.unsqueeze(-1)
 
         return image, targets, gender
-
-
-

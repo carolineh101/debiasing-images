@@ -48,6 +48,10 @@ def main():
     mean_equality_gap_0 = AverageMeter()
     mean_equality_gap_1 = AverageMeter()
     mean_parity_gap = AverageMeter()
+    attr_accuracy = AverageMeter((1, 39))
+    attr_equality_gap_0 = AverageMeter((1, 39))
+    attr_equality_gap_1 = AverageMeter((1, 39))
+    attr_parity_gap = AverageMeter((1, 39))
 
     with tqdm(enumerate(test_data_loader), total=test_batch_count) as pbar:
         for i, (images, targets, genders) in pbar:
@@ -64,17 +68,23 @@ def main():
                 genders = genders.type_as(outputs).view(-1).bool()
 
                 # Calculate accuracy
-                eval_acc = calculateAccuracy(outputs, targets)
+                eval_acc, eval_attr_acc = calculateAccuracy(outputs, targets)
 
                 # Calculate fairness metrics
-                eval_equality_gap_0, eval_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
-                eval_parity_gap = calculateParityGap(outputs, targets, genders)
+                eval_equality_gap_0, eval_equality_gap_1, eval_attr_equality_gap_0, eval_attr_equality_gap_1 = \
+                    calculateEqualityGap(outputs, targets, genders)
+                eval_parity_gap, eval_attr_parity_gap = calculateParityGap(outputs, targets, genders)
 
                 # Update averages
                 mean_accuracy.update(eval_acc, images.size(0))
                 mean_equality_gap_0.update(eval_equality_gap_0, images.size(0))
                 mean_equality_gap_1.update(eval_equality_gap_1, images.size(0))
                 mean_parity_gap.update(eval_parity_gap, images.size(0))
+                attr_accuracy.update(eval_attr_acc, images.size(0))
+                attr_equality_gap_0.update(eval_attr_equality_gap_0, images.size(0))
+                attr_equality_gap_1.update(eval_attr_equality_gap_1, images.size(0))
+                attr_parity_gap.update(eval_attr_parity_gap, images.size(0))
+
 
                 s_test = ('Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % (mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                 pbar.set_description(s_test)
@@ -83,6 +93,8 @@ def main():
         # Log results
         with open(opt.log, 'a+') as f:
             f.write('{}\n'.format(s_test))
+        save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0.avg, attr_equality_gap_1.avg, attr_parity_gap.avg,
+                          opt.attr_metrics)
 
     print('Done!')
 
@@ -93,6 +105,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights', '-w', type=str, required=True, help='weights to preload into model')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--log', type=str, required=False, default='test.log', help='path to log file')
+    parser.add_argument('--attr-metrics', type=str, required=False, default='test_attr', help='filename (to be prepended to \'.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
     opt = parser.parse_args()
     main()

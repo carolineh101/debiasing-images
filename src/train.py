@@ -149,11 +149,12 @@ def main():
                 genders = genders.view(-1).bool()
 
                 # Calculate accuracy
-                train_acc = calculateAccuracy(outputs, targets)
+                train_acc, train_attr_acc = calculateAccuracy(outputs, targets)
 
                 # Calculate fairness metrics
-                train_equality_gap_0, train_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
-                train_parity_gap = calculateParityGap(outputs, targets, genders)
+                train_equality_gap_0, train_equality_gap_1, train_attr_equality_gap_0, train_attr_equality_gap_1 = \
+                    calculateEqualityGap(outputs, targets, genders)
+                train_parity_gap, train_attr_parity_gap = calculateParityGap(outputs, targets, genders)
 
                 # Update averages
                 mean_accuracy.update(train_acc, images.size(0))
@@ -175,9 +176,13 @@ def main():
 
         # Initialize meters
         mean_accuracy = AverageMeter()
+        attr_accuracy = AverageMeter((1, 39))
         mean_equality_gap_0 = AverageMeter()
+        attr_equality_gap_0 = AverageMeter((1, 39))
         mean_equality_gap_1 = AverageMeter()
+        attr_equality_gap_1 = AverageMeter((1, 39))
         mean_parity_gap = AverageMeter()
+        attr_parity_gap = AverageMeter((1, 39))
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
             for i, (images, targets, genders) in pbar:
@@ -196,17 +201,22 @@ def main():
                     genders = genders.type_as(outputs).view(-1).bool()
 
                     # Calculate accuracy
-                    eval_acc = calculateAccuracy(outputs, targets)
+                    eval_acc, eval_attr_acc = calculateAccuracy(outputs, targets)
 
                     # Calculate fairness metrics
-                    eval_equality_gap_0, eval_equality_gap_1 = calculateEqualityGap(outputs, targets, genders)
-                    eval_parity_gap = calculateParityGap(outputs, targets, genders)
+                    eval_equality_gap_0, eval_equality_gap_1, eval_attr_equality_gap_0, eval_attr_equality_gap_1 = \
+                        calculateEqualityGap(outputs, targets, genders)
+                    eval_parity_gap, eval_attr_parity_gap = calculateParityGap(outputs, targets, genders)
 
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
                     mean_equality_gap_0.update(eval_equality_gap_0, images.size(0))
                     mean_equality_gap_1.update(eval_equality_gap_1, images.size(0))
                     mean_parity_gap.update(eval_parity_gap, images.size(0))
+                    attr_accuracy.update(eval_attr_acc, images.size(0))
+                    attr_equality_gap_0.update(eval_attr_equality_gap_0, images.size(0))
+                    attr_equality_gap_1.update(eval_attr_equality_gap_1, images.size(0))
+                    attr_parity_gap.update(eval_attr_parity_gap, images.size(0))
 
                     s_eval = ('%10s Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
                     pbar.set_description(s_eval)
@@ -221,6 +231,8 @@ def main():
         with open(opt.log, 'a+') as f:
             f.write('{}\n'.format(s_train))
             f.write('{}\n'.format(s_eval))
+        save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0.avg, attr_equality_gap_1.avg, attr_parity_gap.avg,
+                          opt.attr_metrics + '_' + str(epoch))
 
         # Check against best accuracy
         mean_eval_acc = mean_accuracy.avg.cpu().item()
@@ -277,6 +289,7 @@ if __name__ == '__main__':
     parser.add_argument('--baseline', action='store_true', help='train baseline model (without adversarial head')
     parser.add_argument('--resume', action='store_true', help='resume training')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
+    parser.add_argument('--attr-metrics', type=str, required=False, default='train_attr', help='filename (to be prepended to \'_{epoch}.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
     opt = parser.parse_args()
     main()
