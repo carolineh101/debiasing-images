@@ -48,10 +48,10 @@ def main():
     mean_equality_gap_0 = AverageMeter(device=device)
     mean_equality_gap_1 = AverageMeter(device=device)
     mean_parity_gap = AverageMeter(device=device)
-    attr_accuracy = AverageMeter((1, 39))
-    attr_equality_gap_0 = AverageMeter((1, 39))
-    attr_equality_gap_1 = AverageMeter((1, 39))
-    attr_parity_gap = AverageMeter((1, 39))
+    attr_accuracy = AverageMeter((1, 39), device=device)
+    attr_equality_gap_0 = AverageMeter((1, 39), device=device)
+    attr_equality_gap_1 = AverageMeter((1, 39), device=device)
+    attr_parity_gap = AverageMeter((1, 39), device=device)
 
     with tqdm(enumerate(test_data_loader), total=test_batch_count) as pbar:
         for i, (images, targets, genders) in pbar:
