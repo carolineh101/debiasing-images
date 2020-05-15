@@ -97,7 +97,9 @@ def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
 
 def calculateProbTrue(preds, targets):
     t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
-    return torch.true_divide(t_p + f_p, preds.size(0))
+    prob_true = torch.true_divide(t_p + f_p, preds.size(0))
+    prob_true[torch.isnan(prob_true)] = 0
+    return prob_true
 
 def calculateParityGap(outputs, targets, genders, threshold=0.5):
     preds = torch.sigmoid(outputs) > threshold
