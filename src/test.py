@@ -16,6 +16,7 @@ def main():
 
     # Determine device
     device = getDevice(opt.gpu_id)
+    num_classes = 39
 
     # Create data loaders
     data_loaders = load_celeba(splits=['test'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage)
@@ -48,10 +49,10 @@ def main():
     mean_equality_gap_0 = AverageMeter()
     mean_equality_gap_1 = AverageMeter()
     mean_parity_gap = AverageMeter()
-    attr_accuracy = AverageMeter((1, 39), device=device)
-    attr_equality_gap_0 = AverageMeter((1, 39), device=device)
-    attr_equality_gap_1 = AverageMeter((1, 39), device=device)
-    attr_parity_gap = AverageMeter((1, 39), device=device)
+    attr_accuracy = AverageMeter((1, num_classes), device=device)
+    attr_equality_gap_0 = AverageMeter((1, num_classes), device=device)
+    attr_equality_gap_1 = AverageMeter((1, num_classes), device=device)
+    attr_parity_gap = AverageMeter((1, num_classes), device=device)
 
     with tqdm(enumerate(test_data_loader), total=test_batch_count) as pbar:
         for i, (images, targets, genders, protected_labels) in pbar:

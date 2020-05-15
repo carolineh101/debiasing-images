@@ -36,9 +36,6 @@ def main():
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
-    #Divide training dataset into those with protected class labels and those without protected class labels
-
-
     # Load checkpoint
     checkpoint = None
     if opt.weights != '':
@@ -90,8 +87,6 @@ def main():
                 primary_optimizer.load_state_dict(checkpoint['optimizers']['primary'])
             if checkpoint['optimizers']['adversarial']:
                 adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
-
-    # torch.autograd.set_detect_anomaly(True)
 
     # Train loop
     # pdb.set_trace()
