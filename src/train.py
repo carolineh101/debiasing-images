@@ -24,6 +24,7 @@ def main():
     hidden_size = opt.hidden_size
     lambd = opt.lambd
     learning_rate = opt.learning_rate
+    adv_learning_rate = opt.adv_learning_rate
     save_after_x_epochs = 10
     num_classes = 39
 
@@ -62,7 +63,7 @@ def main():
     primary_optimizer = torch.optim.Adam(primary_optimizer_params, lr = learning_rate)
     if not baseline:
         adversarial_optimizer_params = list(model.adv_head.parameters())
-        adversarial_optimizer = torch.optim.Adam(adversarial_optimizer_params, lr = learning_rate)
+        adversarial_optimizer = torch.optim.Adam(adversarial_optimizer_params, lr = adv_learning_rate)
 
     start_epoch = 0
     best_acc = 0.0
@@ -289,6 +290,7 @@ if __name__ == '__main__':
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
+    parser.add_argument('--adv-learning-rate', '-alr', type=float, required=False, default=0.001, help='adversarial learning rate')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
     parser.add_argument('--hidden-size', type=int, required=False, default=1024, help='dim of hidden layer')
     parser.add_argument('--lambd', type=float, required=False, default=0.1, help='adversarial weight hyperparameter, lambda')
