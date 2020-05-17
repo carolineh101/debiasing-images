@@ -60,12 +60,28 @@ class AdversarialHead(nn.Module):
     def __init__ (self, hidden_size):
         super(AdversarialHead, self).__init__()
 
+        # self.model = torch.nn.Sequential(
+        #     nn.Linear(in_features=hidden_size, out_features=512),
+        #     nn.ReLU(),
+        #     nn.Linear(in_features=512, out_features=512),
+        #     nn.ReLU(),
+        #     nn.Linear(in_features=512, out_features=1),
+        # )
+
         self.model = torch.nn.Sequential(
             nn.Linear(in_features=hidden_size, out_features=512),
-            nn.ReLU(),
-            nn.Linear(in_features=512, out_features=512),
-            nn.ReLU(),
-            nn.Linear(in_features=512, out_features=1),
+            nn.LeakyReLU(negative_slope=0.1),
+            nn.BatchNorm1d(num_features=512),
+            nn.Linear(in_features=512, out_features=256),
+            nn.LeakyReLU(negative_slope=0.1),
+            nn.BatchNorm1d(num_features=256),
+            nn.Linear(in_features=256, out_features=128),
+            nn.LeakyReLU(negative_slope=0.1),
+            nn.BatchNorm1d(num_features=128),
+            nn.Linear(in_features=128, out_features=64),
+            nn.LeakyReLU(negative_slope=0.1),
+            nn.BatchNorm1d(num_features=64),
+            nn.Linear(in_features=64, out_features=1)
         )
 
     def forward (self, x):

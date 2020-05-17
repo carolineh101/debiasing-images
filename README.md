@@ -14,7 +14,7 @@ python src/train.py
 
 Example with more command line parameters
 ```
-python src/train.py --out-dir output --subset-percentage 0.01 --batch-size 64 -lr 0.01 --hidden_size 512
+python src/train.py --out-dir output --subset-percentage 0.01 --batch-size 16 -lr 0.0001 --hidden-size 512
 ```
 
 # To train the baseline model
