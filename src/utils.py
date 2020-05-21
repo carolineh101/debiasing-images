@@ -92,12 +92,13 @@ def calculateProbCorrect(cm):
     return prob_correct_1, prob_correct_0
 
 def calculateEqualityGap(cm_m, cm_f):
+    pdb.set_trace()
     prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(cm_m)
     prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(cm_f)
     equality_gap_1 = (prob_correct_1_m - prob_correct_1_f).abs()
     equality_gap_0 = (prob_correct_0_m - prob_correct_0_f).abs()
-    average_equality_gap_1 = equality_gap_1.sum() * 1.0 / targets.size(1)
-    average_equality_gap_0 = equality_gap_0.sum() * 1.0 / targets.size(1)
+    average_equality_gap_1 = equality_gap_1.mean()
+    average_equality_gap_0 = equality_gap_0.mean()
     return average_equality_gap_0, average_equality_gap_1, equality_gap_0, equality_gap_1
 
 def calculateProbTrue(cm):
@@ -110,7 +111,7 @@ def calculateParityGap(cm_m, cm_f):
     prob_true_m = calculateProbTrue(cm_m)
     prob_true_f = calculateProbTrue(cm_f)
     parity_gap = (prob_true_m - prob_true_f).abs()
-    average_parity_gap = parity_gap.sum() * 1.0 / targets.size(1)
+    average_parity_gap = parity_gap.mean()
     return average_parity_gap, parity_gap
 
 def save_attr_metrics(accuracy, equality_gap_0, equality_gap_1, parity_gap, filename):
