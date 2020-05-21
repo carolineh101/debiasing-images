@@ -16,7 +16,6 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    pdb.set_trace()
     
     # Model Hyperparams
     random.seed(opt.random_seed)
