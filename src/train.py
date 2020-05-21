@@ -165,9 +165,13 @@ def main():
                     cm_m = batch_cm_m
                     cm_f = batch_cm_f
                 else:
+                    cm_m = list(cm_m)
+                    cm_f = list(cm_f)
                     for j in range(len(cm_m)):
                         cm_m[j] += batch_cm_m[j]
                         cm_f[j] += batch_cm_f[j]
+                    cm_m = tuple(cm_m)
+                    cm_f = tuple(cm_f)
 
                 # Update averages
                 mean_accuracy.update(train_acc, images.size(0))
@@ -223,9 +227,13 @@ def main():
                         cm_m = batch_cm_m
                         cm_f = batch_cm_f
                     else:
+                        cm_m = list(cm_m)
+                        cm_f = list(cm_f)
                         for j in range(len(cm_m)):
                             cm_m[j] += batch_cm_m[j]
                             cm_f[j] += batch_cm_f[j]
+                        cm_m = tuple(cm_m)
+                        cm_f = tuple(cm_f)
 
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
