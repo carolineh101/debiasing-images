@@ -96,11 +96,10 @@ def main():
         # Set model to train mode
         model.train()
 
-        # Initialize meters
+        # Initialize meters and confusion matrices
         mean_accuracy = AverageMeter(device=device)
-        mean_equality_gap_0 = AverageMeter(device=device)
-        mean_equality_gap_1 = AverageMeter(device=device)
-        mean_parity_gap = AverageMeter(device=device)
+        cm_m = None
+        cm_f = None
 
         with tqdm(enumerate(train_data_loader), total=train_batch_count) as pbar: # progress bar
             for i, (images, targets, genders, protected_labels) in pbar:
@@ -158,23 +157,32 @@ def main():
                 genders = genders.view(-1).bool()
 
                 # Calculate accuracy
-                train_acc, train_attr_acc = calculateAccuracy(outputs, targets)
+                train_acc, _ = calculateAccuracy(outputs, targets)
 
-                # Calculate fairness metrics
-                train_equality_gap_0, train_equality_gap_1, train_attr_equality_gap_0, train_attr_equality_gap_1 = \
-                    calculateEqualityGap(outputs, targets, genders)
-                train_parity_gap, train_attr_parity_gap = calculateParityGap(outputs, targets, genders)
+                # Calculate confusion matrices
+                batch_cm_m, batch_cm_f = calculateGenderConfusionMatrices(outputs, targets, genders)
+                if cm_m is None and cm_f is None:
+                    cm_m = batch_cm_m
+                    cm_f = batch_cm_f
+                else:
+                    for j in range(len(cm_m)):
+                        cm_m[j] += batch_cm_m[j]
+                        cm_f[j] += batch_cm_f[j]
 
                 # Update averages
                 mean_accuracy.update(train_acc, images.size(0))
-                mean_equality_gap_0.update(train_equality_gap_0, images.size(0))
-                mean_equality_gap_1.update(train_equality_gap_1, images.size(0))
-                mean_parity_gap.update(train_parity_gap, images.size(0))
 
                 if baseline:
-                    s_train = ('%10s Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                    s_train = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
                 else:
-                    s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                    s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg)
+
+                # Calculate fairness metrics on final batch
+                if i == train_batch_count - 1:
+                    avg_equality_gap_0, avg_equality_gap_1, _, _ = calculateEqualityGap(cm_m, cm_f)
+                    avg_parity_gap, _ = calculateParityGap(cm_m, cm_f)
+                    s_train += (', Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % (avg_equality_gap_0, avg_equality_gap_1, avg_parity_gap)
+
                 pbar.set_description(s_train)
 
         # end batch ------------------------------------------------------------------------------------------------
@@ -183,15 +191,14 @@ def main():
         # pdb.set_trace()
         model.eval()
 
-        # Initialize meters
+        # Initialize meters, confusion matrices, and metrics
         mean_accuracy = AverageMeter()
-        mean_equality_gap_0 = AverageMeter()
-        mean_equality_gap_1 = AverageMeter()
-        mean_parity_gap = AverageMeter()
         attr_accuracy = AverageMeter((1, num_classes), device=device)
-        attr_equality_gap_0 = AverageMeter((1, num_classes), device=device)
-        attr_equality_gap_1 = AverageMeter((1, num_classes), device=device)
-        attr_parity_gap = AverageMeter((1, num_classes), device=device)
+        cm_m = None
+        cm_f = None
+        attr_equality_gap_0 = None
+        attr_equality_gap_1 = None
+        attr_parity_gap = None
 
         with tqdm(enumerate(dev_data_loader), total=dev_batch_count) as pbar:
             for i, (images, targets, genders, protected_labels) in pbar:
@@ -210,22 +217,29 @@ def main():
                     # Calculate accuracy
                     eval_acc, eval_attr_acc = calculateAccuracy(outputs, targets)
 
-                    # Calculate fairness metrics
-                    eval_equality_gap_0, eval_equality_gap_1, eval_attr_equality_gap_0, eval_attr_equality_gap_1 = \
-                        calculateEqualityGap(outputs, targets, genders)
-                    eval_parity_gap, eval_attr_parity_gap = calculateParityGap(outputs, targets, genders)
+                    # Calculate confusion matrices
+                    batch_cm_m, batch_cm_f = calculateGenderConfusionMatrices(outputs, targets, genders)
+                    if cm_m is None and cm_f is None:
+                        cm_m = batch_cm_m
+                        cm_f = batch_cm_f
+                    else:
+                        for j in range(len(cm_m)):
+                            cm_m[j] += batch_cm_m[j]
+                            cm_f[j] += batch_cm_f[j]
 
                     # Update averages
                     mean_accuracy.update(eval_acc, images.size(0))
-                    mean_equality_gap_0.update(eval_equality_gap_0, images.size(0))
-                    mean_equality_gap_1.update(eval_equality_gap_1, images.size(0))
-                    mean_parity_gap.update(eval_parity_gap, images.size(0))
                     attr_accuracy.update(eval_attr_acc, images.size(0))
-                    attr_equality_gap_0.update(eval_attr_equality_gap_0, images.size(0))
-                    attr_equality_gap_1.update(eval_attr_equality_gap_1, images.size(0))
-                    attr_parity_gap.update(eval_attr_parity_gap, images.size(0))
 
-                    s_eval = ('%10s Accuracy: %.4f, Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg, mean_equality_gap_0.avg, mean_equality_gap_1.avg, mean_parity_gap.avg)
+                    s_eval = ('%10s Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), mean_accuracy.avg)
+
+                    # Calculate fairness metrics on final batch
+                    if i == dev_batch_count - 1:
+                        avg_equality_gap_0, avg_equality_gap_1, attr_equality_gap_0, attr_equality_gap_1 = \
+                            calculateEqualityGap(cm_m, cm_f)
+                        avg_parity_gap, attr_parity_gap = calculateParityGap(cm_m, cm_f)
+                        s_eval += (', Equality Gap 0: %.4f, Equality Gap 1: %.4f, Parity Gap: %.4f') % (avg_equality_gap_0, avg_equality_gap_1, avg_parity_gap)
+
                     pbar.set_description(s_eval)
 
 
@@ -237,7 +251,7 @@ def main():
         with open(opt.log, 'a+') as f:
             f.write('{}\n'.format(s_train))
             f.write('{}\n'.format(s_eval))
-        save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0.avg, attr_equality_gap_1.avg, attr_parity_gap.avg,
+        save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0, attr_equality_gap_1, attr_parity_gap,
                           opt.attr_metrics + '_' + str(epoch))
 
         # Check against best accuracy

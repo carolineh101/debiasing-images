@@ -77,34 +77,38 @@ def calculateConfusionMatrix(preds, targets):
     false_negatives = torch.sum(confusion_vector == 0, 0)
     return true_positives, false_positives, true_negatives, false_negatives
 
-def calculateProbCorrect(preds, targets):
-    t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
+def calculateGenderConfusionMatrices(outputs, targets, genders, threshold=0.5):
+    preds = torch.sigmoid(outputs) > threshold
+    cm_m = calculateConfusionMatrix(preds[genders], targets[genders])
+    cm_f = calculateConfusionMatrix(preds[genders == 0], targets[genders == 0])
+    return cm_m, cm_f
+
+def calculateProbCorrect(cm):
+    t_p, f_p, t_n, f_n = cm
     prob_correct_1 = torch.true_divide(t_p, t_p + f_n)
     prob_correct_0 = torch.true_divide(t_n, t_n + f_p)
     for prob_correct in [prob_correct_1, prob_correct_0]:
         prob_correct[torch.isnan(prob_correct)] = 0
     return prob_correct_1, prob_correct_0
 
-def calculateEqualityGap(outputs, targets, genders, threshold=0.5):
-    preds = torch.sigmoid(outputs) > threshold
-    prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(preds[genders], targets[genders])
-    prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(preds[genders == 0], targets[genders == 0])
+def calculateEqualityGap(cm_m, cm_f):
+    prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(cm_m)
+    prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(cm_f)
     equality_gap_1 = (prob_correct_1_m - prob_correct_1_f).abs()
     equality_gap_0 = (prob_correct_0_m - prob_correct_0_f).abs()
     average_equality_gap_1 = equality_gap_1.sum() * 1.0 / targets.size(1)
     average_equality_gap_0 = equality_gap_0.sum() * 1.0 / targets.size(1)
     return average_equality_gap_0, average_equality_gap_1, equality_gap_0, equality_gap_1
 
-def calculateProbTrue(preds, targets):
-    t_p, f_p, t_n, f_n = calculateConfusionMatrix(preds, targets)
-    prob_true = torch.true_divide(t_p + f_p, preds.size(0))
+def calculateProbTrue(cm):
+    t_p, f_p, t_n, f_n = cm
+    prob_true = torch.true_divide(t_p + f_p, t_p + f_p + t_n + f_n)
     prob_true[torch.isnan(prob_true)] = 0
     return prob_true
 
-def calculateParityGap(outputs, targets, genders, threshold=0.5):
-    preds = torch.sigmoid(outputs) > threshold
-    prob_true_m = calculateProbTrue(preds[genders], targets[genders])
-    prob_true_f = calculateProbTrue(preds[genders == 0], targets[genders == 0])
+def calculateParityGap(cm_m, cm_f):
+    prob_true_m = calculateProbTrue(cm_m)
+    prob_true_f = calculateProbTrue(cm_f)
     parity_gap = (prob_true_m - prob_true_f).abs()
     average_parity_gap = parity_gap.sum() * 1.0 / targets.size(1)
     return average_parity_gap, parity_gap
