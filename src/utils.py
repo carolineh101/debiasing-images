@@ -92,7 +92,6 @@ def calculateProbCorrect(cm):
     return prob_correct_1, prob_correct_0
 
 def calculateEqualityGap(cm_m, cm_f):
-    pdb.set_trace()
     prob_correct_1_m, prob_correct_0_m = calculateProbCorrect(cm_m)
     prob_correct_1_f, prob_correct_0_f = calculateProbCorrect(cm_f)
     equality_gap_1 = (prob_correct_1_m - prob_correct_1_f).abs()
