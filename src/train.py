@@ -81,7 +81,7 @@ def main():
                 start_epoch = checkpoint['epoch'] + 1
             if checkpoint['best_acc']:
                 best_acc = checkpoint['best_acc']
-            if checkpoint['lambd']:
+            if checkpoint['hyp']['lambd']:
                 lambd = checkpoint['lambd']
             if checkpoint['optimizers']['primary']:
                 primary_optimizer.load_state_dict(checkpoint['optimizers']['primary'])
