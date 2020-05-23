@@ -41,7 +41,7 @@ class CelebADataset(Dataset):
 
     def __init__(self, split, dir_name='data/', subset_percentage = 1, protected_percentage = 1):
         self.transform_image = transform_image
-        # self.target_transform = target_transform
+        self.gender_index = 20
         self.dataset = datasets.CelebA(
             dir_name,
             split=split,
@@ -53,10 +53,22 @@ class CelebADataset(Dataset):
         if subset_percentage < 1:
             self.dataset = Subset(self.dataset, range(ceil(subset_percentage * len(self.dataset))))
         
-        num_protected = ceil(protected_percentage * len(self.dataset))
-        self.protected_split = random.sample(range(len(self.dataset)), num_protected)
+        # Handle protected split (only relevant for train).
         self.protected = np.zeros(len(self.dataset))
-        self.protected[self.protected_split] = 1    
+        if split == 'train':
+            # Get gender information.
+            genders = np.array([self.dataset[i][1][20] for i in range(len(self.dataset))])
+            male_idxs = np.where(genders == 1)[0].tolist()
+            female_idxs = np.where(genders == 0)[0].tolist()
+            # Set number of protected data points.
+            max_percentage = min(len(male_idxs), len(female_idxs)) * 2.0 / len(self.dataset)
+            if protected_percentage > max_percentage: protected_percentage = max_percentage
+            num_protected = ceil(protected_percentage * len(self.dataset))
+            if num_protected % 2 == 1: num_protected -= 1
+            # Create protected split.
+            self.protected_split = random.sample(male_idxs, int(num_protected / 2))
+            self.protected_split.extend(random.sample(female_idxs, int(num_protected / 2)))
+            self.protected[self.protected_split] = 1
 
 
     def __len__(self):
@@ -67,9 +79,8 @@ class CelebADataset(Dataset):
             idx = idx.tolist()
         image, targets = self.dataset[idx]
 
-        gender_index = 20
-        gender = targets[gender_index]
-        targets = torch.cat((targets[:gender_index], targets[gender_index+1:]))
+        gender = targets[self.gender_index]
+        targets = torch.cat((targets[:self.gender_index], targets[self.gender_index+1:]))
 
         # [batch_size] -> [batch_size, 1]
         gender = gender.unsqueeze(-1)
