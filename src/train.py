@@ -16,7 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    
+    #pdb.set_trace()
     # Model Hyperparams
     random.seed(opt.random_seed)
     baseline = opt.baseline
@@ -32,7 +32,7 @@ def main():
 
     # Create data loaders
     data_loaders = load_celeba(splits=['train', 'valid'], batch_size=opt.batch_size, subset_percentage=opt.subset_percentage, \
-         protected_percentage = opt.protected_percentage)
+         protected_percentage = opt.protected_percentage, balance_protected=opt.balance_protected)
     train_data_loader = data_loaders['train']
     dev_data_loader = data_loaders['valid']
 
@@ -307,6 +307,7 @@ if __name__ == '__main__':
     # parser.add_argument('--dataset', type=str, required=True, help='dataset path. Must contain training_set and eval_set subdirectories.')
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--protected-percentage', type=float, required=False, default=1.0, help='Fraction of dataset with protected class label')
+    parser.add_argument('--balance-protected', action='store_true', help='protected class labeled subset is balanced')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
