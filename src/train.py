@@ -89,7 +89,8 @@ def main():
                 adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
 
     # Train loop
-    # pdb.set_trace()
+    #pdb.set_trace()
+    adversarial_loss = None
     for epoch in range(start_epoch, opt.num_epochs):
 
         # Set model to train mode
@@ -134,22 +135,30 @@ def main():
                 if baseline:
                     loss = classification_loss
                 else:
-                    adversarial_loss = adversarial_criterion(a, genders[protected_labels])
-                    loss = classification_loss - lambd * adversarial_loss
+                    if a != None:
+                        adversarial_loss = adversarial_criterion(a, genders[protected_labels])
+                        loss = classification_loss - lambd * adversarial_loss
 
-                    # Backward pass (Primary)
-                    loss.backward()
-                    primary_optimizer.step()
+                        # Backward pass (Primary)
+                        loss.backward()
+                        primary_optimizer.step()
 
-                    # Zero out buffers
-                    adversarial_optimizer.zero_grad()
+                        # Zero out buffers
+                        adversarial_optimizer.zero_grad()
 
-                    # Calculate loss for adversarial head
-                    adversarial_loss = adversarial_criterion(a_detached, genders[protected_labels])
+                        # Calculate loss for adversarial head
+                        adversarial_loss = adversarial_criterion(a_detached, genders[protected_labels])
 
-                    # Backward pass (Adversarial)
-                    adversarial_loss.backward()
-                    adversarial_optimizer.step()
+                        # Backward pass (Adversarial)
+                        adversarial_loss.backward()
+                        adversarial_optimizer.step()
+                    else:
+                        loss = classification_loss
+
+                        # Backward pass (Primary)
+                        loss.backward()
+                        primary_optimizer.step()
+
 
 
                 # Convert genders: (batch_size, 1) -> (batch_size,)
@@ -178,7 +187,10 @@ def main():
                 if baseline:
                     s_train = ('%10s Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), loss.item(), mean_accuracy.avg)
                 else:
-                    s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg)
+                    if adversarial_loss == None:
+                        s_train = ('%10s Classification Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), loss.item(), mean_accuracy.avg)
+                    else: 
+                        s_train = ('%10s Classification Loss: %.4f, Adversarial Loss: %.4f, Total Loss: %.4f, Accuracy: %.4f') % ('%g/%g' % (epoch, opt.num_epochs - 1), classification_loss.item(), adversarial_loss.item(), loss.item(), mean_accuracy.avg)
 
                 # Calculate fairness metrics on final batch
                 if i == train_batch_count - 1:
@@ -250,9 +262,15 @@ def main():
                     pbar.set_description(s_eval)
 
 
-        # Create output dir
-        if not os.path.exists(opt.out_dir):
-            os.makedirs(opt.out_dir)
+        # Create output dirs
+        for dir in [opt.log_dir, opt.weights_dir]:
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+                subdir = os.path.join(dir, opt.out_dir)
+                if not os.path.exists(subdir):
+                    os.makedirs(subdir)
+        log_dir = os.path.join(opt.log_dir, opt.out_dir)
+        weights_dir = os.path.join(opt.weights_dir, opt.out_dir)
 
         # Log results
         with open(opt.log, 'a+') as f:
@@ -308,7 +326,9 @@ if __name__ == '__main__':
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
     parser.add_argument('--protected-percentage', type=float, required=False, default=1.0, help='Fraction of dataset with protected class label')
     parser.add_argument('--balance-protected', action='store_true', help='protected class labeled subset is balanced')
-    parser.add_argument('--out-dir', '-o', type=str, required=True, help='output path for saving model weights')
+    parser.add_argument('--out-dir', '-o', type=str, required=True, help='output subdirectory for logs and weights')
+    parser.add_argument('--weights-dir', type=str, required=False, default='checkpoints', help='output directory for weights')
+
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
@@ -318,6 +338,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambd', type=float, required=False, default=0.1, help='adversarial weight hyperparameter, lambda')
     parser.add_argument('--baseline', action='store_true', help='train baseline model (without adversarial head')
     parser.add_argument('--resume', action='store_true', help='resume training')
+    parser.add_argument('--log-dir', type=str, required=False, default='logs', help='output directory for logs')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
     parser.add_argument('--attr-metrics', type=str, required=False, default='train_attr', help='filename (to be prepended to \'_{epoch}.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')

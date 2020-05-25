@@ -132,6 +132,8 @@ class OurModel(nn.Module):
         h = self.encoder(images) # (batch_size, hidden_size)
         y = self.classifier(h) # (batch_size, num_classes)
         protected_class_encoded_images = h[protected_class_labels] 
+        if protected_class_encoded_images.shape[0] == 0:
+            return y, (None, None)
         a, a_detached = self.adv_head(protected_class_encoded_images)
         return y, (a, a_detached)
 
