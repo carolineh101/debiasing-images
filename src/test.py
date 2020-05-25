@@ -23,7 +23,7 @@ def main():
     test_data_loader = data_loaders['test']
 
     # Load checkpoint
-    checkpoint = torch.load(opt.weights, map_location=device)
+    checkpoint = torch.load(os.path.join(opt.weights_dir, opt.out_dir, opt.weights), map_location=device)
     baseline = checkpoint['baseline']
     hidden_size = checkpoint['hyp']['hidden_size']
 
@@ -101,10 +101,11 @@ def main():
 
 
         # Log results
-        with open(opt.log, 'a+') as f:
+        log_dir = os.path.join(opt.log_dir, opt.out_dir)
+        with open(os.path.join(log_dir, opt.log), 'a+') as f:
             f.write('{}\n'.format(s_test))
         save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0, attr_equality_gap_1, attr_parity_gap,
-                          opt.attr_metrics)
+                          os.path.join(log_dir, opt.attr_metrics))
 
     print('Done!')
 
@@ -112,8 +113,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     # parser.add_argument('--dataset', type=str, required=True, help='dataset path. Must contain training_set and eval_set subdirectories.')
     parser.add_argument('--subset-percentage', type=float, required=False, default=1.0, help='Fraction of the dataset to use')
-    parser.add_argument('--weights', '-w', type=str, required=True, help='weights to preload into model')
+    parser.add_argument('--out-dir', type=str, required=True, help='subdirectory for logs and weights')
+    parser.add_argument('--weights-dir', type=str, required=False, default='checkpoints', help='directory for weights')
+    parser.add_argument('--weights', '-w', type=str, required=False, default='best.pkl', help='weights to preload into model')
     parser.add_argument('--batch-size', type=int, required=False, default=16, help='batch size')
+    parser.add_argument('--log-dir', type=str, required=False, default='logs', help='directory for logs')
     parser.add_argument('--log', type=str, required=False, default='test.log', help='path to log file')
     parser.add_argument('--attr-metrics', type=str, required=False, default='test_attr', help='filename (to be prepended to \'.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
