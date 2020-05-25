@@ -1,7 +1,7 @@
 #!/bin/bash
 
-lambdas=(0.8, 1.0, 2.0)
-phis=(0.01, 0.05, 0.1, 0.25)
+lambdas=(0.8 1.0 2.0)
+phis=(0.01 0.05 0.1 0.25)
 for lambd in "${lambdas[@]}"
 do
     for phi in "${phis[@]}"
