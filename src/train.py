@@ -252,11 +252,11 @@ def main():
 
         # Create output dirs
         for dir in [opt.log_dir, opt.weights_dir]:
-        if not os.path.exists(dir):
-            os.makedirs(dir)
-            subdir = os.path.join(dir, opt.out_dir)
-            if not os.path.exists(subdir):
-                os.makedirs(subdir)
+            if not os.path.exists(dir):
+                os.makedirs(dir)
+                subdir = os.path.join(dir, opt.out_dir)
+                if not os.path.exists(subdir):
+                    os.makedirs(subdir)
         log_dir = os.path.join(opt.log_dir, opt.out_dir)
         weights_dir = os.path.join(opt.weights_dir, opt.out_dir)
 
@@ -315,7 +315,7 @@ if __name__ == '__main__':
     parser.add_argument('--protected-percentage', type=float, required=False, default=1.0, help='Fraction of dataset with protected class label')
     parser.add_argument('--balance-protected', action='store_true', help='protected class labeled subset is balanced')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output subdirectory for logs and weights')
-    parser.add_argument('--weights-dir', '-o', type=str, required=False, default='checkpoints', help='output directory for weights')
+    parser.add_argument('--weights-dir', type=str, required=False, default='checkpoints', help='output directory for weights')
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
@@ -325,7 +325,7 @@ if __name__ == '__main__':
     parser.add_argument('--lambd', type=float, required=False, default=0.1, help='adversarial weight hyperparameter, lambda')
     parser.add_argument('--baseline', action='store_true', help='train baseline model (without adversarial head')
     parser.add_argument('--resume', action='store_true', help='resume training')
-    parser.add_argument('--log-dir', '-o', type=str, required=False, default='logs', help='output directory for logs')
+    parser.add_argument('--log-dir', type=str, required=False, default='logs', help='output directory for logs')
     parser.add_argument('--log', type=str, required=False, default='train.log', help='path to log file')
     parser.add_argument('--attr-metrics', type=str, required=False, default='train_attr', help='filename (to be prepended to \'_{epoch}.csv\') recording per-attribute metrics')
     parser.add_argument('--gpu-id', type=int, required=False, default=0, help='GPU ID to use')
