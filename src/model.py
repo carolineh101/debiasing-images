@@ -122,7 +122,7 @@ class OurModel(nn.Module):
         self.encoder = Encoder(hidden_size)
         self.classifier = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
-        self.adv_samples = torch.FloatTensor(device=self.device)
+        self.adv_samples = torch.FloatTensor().to(self.device)
 
 
     # def forward (self, images, images_subset):
@@ -145,7 +145,7 @@ class OurModel(nn.Module):
                 return y, (None, None)
             else:
                 a, a_detached = self.adv_head(self.adv_samples)
-                self.adv_samples = torch.FloatTensor(device=self.device)
+                self.adv_samples = torch.FloatTensor().to(self.device)
                 return y, (a, a_detached)
 
         a, a_detached = self.adv_head(protected_class_encoded_images)
