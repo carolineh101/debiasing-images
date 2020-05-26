@@ -16,7 +16,7 @@ from model import BaselineModel, OurModel
 from utils import *
 
 def main():
-    #pdb.set_trace()
+    # pdb.set_trace()
     # Model Hyperparams
     random.seed(opt.random_seed)
     baseline = opt.baseline
@@ -47,7 +47,7 @@ def main():
     if baseline:
         model = BaselineModel(hidden_size)
     else:
-        model = OurModel(hidden_size)
+        model = OurModel(hidden_size, device=device)
 
     # Convert device
     model = model.to(device)
@@ -89,7 +89,7 @@ def main():
                 adversarial_optimizer.load_state_dict(checkpoint['optimizers']['adversarial'])
 
     # Train loop
-    #pdb.set_trace()
+    # pdb.set_trace()
     adversarial_loss = None
     for epoch in range(start_epoch, opt.num_epochs):
 

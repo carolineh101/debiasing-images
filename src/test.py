@@ -31,7 +31,7 @@ def main():
     if baseline:
         model = BaselineModel(hidden_size)
     else:
-        model = OurModel(hidden_size)
+        model = OurModel(hidden_size, device=device)
 
     # Convert device
     model = model.to(device)
