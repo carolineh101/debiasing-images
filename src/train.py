@@ -266,9 +266,9 @@ def main():
         for dir in [opt.log_dir, opt.weights_dir]:
             if not os.path.exists(dir):
                 os.makedirs(dir)
-                subdir = os.path.join(dir, opt.out_dir)
-                if not os.path.exists(subdir):
-                    os.makedirs(subdir)
+            subdir = os.path.join(dir, opt.out_dir)
+            if not os.path.exists(subdir):
+                os.makedirs(subdir)
         log_dir = os.path.join(opt.log_dir, opt.out_dir)
         weights_dir = os.path.join(opt.weights_dir, opt.out_dir)
 
