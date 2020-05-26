@@ -273,11 +273,11 @@ def main():
         weights_dir = os.path.join(opt.weights_dir, opt.out_dir)
 
         # Log results
-        with open(opt.log, 'a+') as f:
+        with open(os.path.join(log_dir, opt.log), 'a+') as f:
             f.write('{}\n'.format(s_train))
             f.write('{}\n'.format(s_eval))
         save_attr_metrics(attr_accuracy.avg, attr_equality_gap_0, attr_equality_gap_1, attr_parity_gap,
-                          opt.attr_metrics + '_' + str(epoch))
+                          os.path.join(log_dir, opt.attr_metrics + '_' + str(epoch)))
 
         # Check against best accuracy
         mean_eval_acc = mean_accuracy.avg.cpu().item()
@@ -302,18 +302,18 @@ def main():
         }
 
         # Save last checkpoint
-        torch.save(checkpoint, os.path.join(opt.out_dir, 'last.pkl'))
+        torch.save(checkpoint, os.path.join(weights_dir, 'last.pkl'))
 
         # Save best checkpoint
         if save_best:
-            torch.save(checkpoint, os.path.join(opt.out_dir, 'best.pkl'))
+            torch.save(checkpoint, os.path.join(weights_dir, 'best.pkl'))
             save_best = False
 
         # Save backup every 10 epochs (optional)
         if (epoch + 1) % save_after_x_epochs == 0:
             # Save our models
             print('!!! saving models at epoch: ' + str(epoch))
-            torch.save(checkpoint, os.path.join(opt.out_dir, 'checkpoint-%d-%d.pkl' %(epoch+1, 1)))             
+            torch.save(checkpoint, os.path.join(weights_dir, 'checkpoint-%d-%d.pkl' %(epoch+1, 1)))               
 
         # Delete checkpoint
         del checkpoint
@@ -328,7 +328,6 @@ if __name__ == '__main__':
     parser.add_argument('--balance-protected', action='store_true', help='protected class labeled subset is balanced')
     parser.add_argument('--out-dir', '-o', type=str, required=True, help='output subdirectory for logs and weights')
     parser.add_argument('--weights-dir', type=str, required=False, default='checkpoints', help='output directory for weights')
-
     parser.add_argument('--weights', '-w', type=str, required=False, default='', help='weights to preload into model')
     parser.add_argument('--num-epochs', type=int, required=False, default=10, help='number of epochs')
     parser.add_argument('--learning-rate', '-lr', type=float, required=False, default=0.0001, help='learning rate')
