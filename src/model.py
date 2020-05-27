@@ -71,16 +71,12 @@ class AdversarialHead(nn.Module):
         self.model = torch.nn.Sequential(
             nn.Linear(in_features=hidden_size, out_features=512),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=512),
             nn.Linear(in_features=512, out_features=256),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=256),
             nn.Linear(in_features=256, out_features=128),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=128),
             nn.Linear(in_features=128, out_features=64),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=64),
             nn.Linear(in_features=64, out_features=1)
         )
 
@@ -115,14 +111,12 @@ class BaselineModel(nn.Module):
         return y
 
 class OurModel(nn.Module):
-    def __init__ (self, hidden_size, num_classes=39, device='cpu'):
+    def __init__ (self, hidden_size, num_classes=39):
         super(OurModel, self).__init__()
 
-        self.device = device
         self.encoder = Encoder(hidden_size)
         self.classifier = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
-        self.adv_samples = torch.FloatTensor(device=self.device)
 
 
     # def forward (self, images, images_subset):
@@ -132,22 +126,13 @@ class OurModel(nn.Module):
         # y = self.classifer(h_images)
         # h_images_subset = self.encoder(images_subset)
         # a = self.adv_head(h_images_subset)
-        #pdb.set_trace()
+        pdb.set_trace()
 
         h = self.encoder(images) # (batch_size, hidden_size)
         y = self.classifier(h) # (batch_size, num_classes)
         protected_class_encoded_images = h[protected_class_labels] 
         if protected_class_encoded_images.shape[0] == 0:
             return y, (None, None)
-        if protected_class_encoded_images.shape[0] == 1:
-            self.adv_samples = torch.cat((self.adv_samples, protected_class_encoded_images), 0)
-            if self.adv_samples.shape[0] < 4:
-                return y, (None, None)
-            else:
-                a, a_detached = self.adv_head(self.adv_samples)
-                self.adv_samples = torch.FloatTensor(device=self.device)
-                return y, (a, a_detached)
-
         a, a_detached = self.adv_head(protected_class_encoded_images)
         return y, (a, a_detached)
 
