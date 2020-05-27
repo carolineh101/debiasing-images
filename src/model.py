@@ -71,16 +71,12 @@ class AdversarialHead(nn.Module):
         self.model = torch.nn.Sequential(
             nn.Linear(in_features=hidden_size, out_features=512),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=512),
             nn.Linear(in_features=512, out_features=256),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=256),
             nn.Linear(in_features=256, out_features=128),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=128),
             nn.Linear(in_features=128, out_features=64),
             nn.LeakyReLU(negative_slope=0.1),
-            nn.BatchNorm1d(num_features=64),
             nn.Linear(in_features=64, out_features=1)
         )
 
@@ -122,6 +118,7 @@ class OurModel(nn.Module):
         self.classifier = Classifier(hidden_size, num_classes)
         self.adv_head = AdversarialHead(hidden_size)
 
+
     # def forward (self, images, images_subset):
     def forward (self, images, protected_class_labels):
 
@@ -129,6 +126,7 @@ class OurModel(nn.Module):
         # y = self.classifer(h_images)
         # h_images_subset = self.encoder(images_subset)
         # a = self.adv_head(h_images_subset)
+
         h = self.encoder(images) # (batch_size, hidden_size)
         y = self.classifier(h) # (batch_size, num_classes)
         protected_class_encoded_images = h[protected_class_labels] 
