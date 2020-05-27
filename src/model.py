@@ -126,7 +126,6 @@ class OurModel(nn.Module):
         # y = self.classifer(h_images)
         # h_images_subset = self.encoder(images_subset)
         # a = self.adv_head(h_images_subset)
-        pdb.set_trace()
 
         h = self.encoder(images) # (batch_size, hidden_size)
         y = self.classifier(h) # (batch_size, num_classes)
