@@ -1,1 +1,1 @@
-Accuracy: 0.9132, Equality Gap 0: 0.1191, Equality Gap 1: 0.3605, Parity Gap: 0.1627
+Accuracy: 0.9132, Equality Gap 0: 0.0827, Equality Gap 1: 0.2979, Parity Gap: 0.1841
