@@ -1,0 +1,20 @@
+       0/9 Classification Loss: 0.3235, Adversarial Loss: 0.6921, Total Loss: -1.0607, Accuracy: 0.8516, Equality Gap 0: 0.0517, Equality Gap 1: 0.0860, Parity Gap: 0.0873
+       0/9 Accuracy: 0.8715, Equality Gap 0: 0.0822, Equality Gap 1: 0.1319, Parity Gap: 0.1185
+       1/9 Classification Loss: 0.2530, Adversarial Loss: 0.6528, Total Loss: 0.2530, Accuracy: 0.8817, Equality Gap 0: 0.0757, Equality Gap 1: 0.1702, Parity Gap: 0.1379
+       1/9 Accuracy: 0.8918, Equality Gap 0: 0.0827, Equality Gap 1: 0.2516, Parity Gap: 0.1585
+       2/9 Classification Loss: 0.2968, Adversarial Loss: 0.6081, Total Loss: 0.2968, Accuracy: 0.8918, Equality Gap 0: 0.0791, Equality Gap 1: 0.1985, Parity Gap: 0.1538
+       2/9 Accuracy: 0.8977, Equality Gap 0: 0.1009, Equality Gap 1: 0.2771, Parity Gap: 0.1818
+       3/9 Classification Loss: 0.2254, Adversarial Loss: 0.7670, Total Loss: 0.2254, Accuracy: 0.8973, Equality Gap 0: 0.0775, Equality Gap 1: 0.2079, Parity Gap: 0.1602
+       3/9 Accuracy: 0.8991, Equality Gap 0: 0.0800, Equality Gap 1: 0.2210, Parity Gap: 0.1495
+       4/9 Classification Loss: 0.2184, Adversarial Loss: 0.6742, Total Loss: 0.2184, Accuracy: 0.9012, Equality Gap 0: 0.0820, Equality Gap 1: 0.2215, Parity Gap: 0.1677
+       4/9 Accuracy: 0.9063, Equality Gap 0: 0.0994, Equality Gap 1: 0.3107, Parity Gap: 0.1865
+       5/9 Classification Loss: 0.2340, Adversarial Loss: 0.7125, Total Loss: 0.2340, Accuracy: 0.9061, Equality Gap 0: 0.0813, Equality Gap 1: 0.2402, Parity Gap: 0.1748
+       5/9 Accuracy: 0.9121, Equality Gap 0: 0.0907, Equality Gap 1: 0.3156, Parity Gap: 0.1871
+       6/9 Classification Loss: 0.2396, Adversarial Loss: 0.6432, Total Loss: 0.2396, Accuracy: 0.9113, Equality Gap 0: 0.0789, Equality Gap 1: 0.2368, Parity Gap: 0.1794
+       6/9 Accuracy: 0.9140, Equality Gap 0: 0.0868, Equality Gap 1: 0.2940, Parity Gap: 0.1887
+       7/9 Classification Loss: 0.2164, Adversarial Loss: 0.6828, Total Loss: 0.2164, Accuracy: 0.9164, Equality Gap 0: 0.0765, Equality Gap 1: 0.2568, Parity Gap: 0.1838
+       7/9 Accuracy: 0.9145, Equality Gap 0: 0.0877, Equality Gap 1: 0.2722, Parity Gap: 0.1856
+       8/9 Classification Loss: 0.1814, Adversarial Loss: 0.6825, Total Loss: 0.1814, Accuracy: 0.9210, Equality Gap 0: 0.0730, Equality Gap 1: 0.2288, Parity Gap: 0.1853
+       8/9 Accuracy: 0.9166, Equality Gap 0: 0.0886, Equality Gap 1: 0.2912, Parity Gap: 0.1932
+       9/9 Classification Loss: 0.1679, Adversarial Loss: 0.6785, Total Loss: 0.1679, Accuracy: 0.9268, Equality Gap 0: 0.0677, Equality Gap 1: 0.2180, Parity Gap: 0.1868
+       9/9 Accuracy: 0.9160, Equality Gap 0: 0.0799, Equality Gap 1: 0.2703, Parity Gap: 0.1850
