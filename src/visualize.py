@@ -13,7 +13,7 @@ BASELINE_ATTR_LOG = 'test_attr_baseline.csv'
 LAMBDAS = ['0.2', '0.4', '0.6', '0.8', '1.0', '2.0']
 PHIS = ['0.0', '0.01', '0.05', '0.1', '0.25', '1.0']
 
-ATTRS = ['Blond_Hair', 'Rosy_Cheeks', 'Wearing_Necktie']
+ATTRS = ['Blond_Hair', 'Rosy_Cheeks', 'Wearing_Necktie', 'Straight_Hair', 'Black_Hair']
 METRICS = ['Accuracy', 'Equality Gap 0', 'Equality Gap 1', 'Parity Gap']
 
 
